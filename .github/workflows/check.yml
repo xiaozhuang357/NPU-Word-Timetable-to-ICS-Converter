@@ -1,0 +1,83 @@
+name: 检查项目完整性
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 检查必要文件
+        run: |
+          echo "检查必要文件..."
+          test -f index.html && echo "✅ index.html" || echo "❌ 缺失 index.html"
+          test -f README.md && echo "✅ README.md" || echo "❌ 缺失 README.md"
+          test -f LICENSE && echo "✅ LICENSE" || echo "❌ 缺失 LICENSE"
+          test -f package.json && echo "✅ package.json" || echo "❌ 缺失 package.json"
+          test -f CONTRIBUTING.md && echo "✅ CONTRIBUTING.md" || echo "❌ 缺失 CONTRIBUTING.md"
+          test -f .gitignore && echo "✅ .gitignore" || echo "❌ 缺失 .gitignore"
+
+      - name: 检查 HTML 语法
+        run: |
+          echo "检查 HTML 标签配对..."
+          SCRIPT_OPEN=$(grep -c "<script" index.html || echo 0)
+          SCRIPT_CLOSE=$(grep -c "</script>" index.html || echo 0)
+          STYLE_OPEN=$(grep -c "<style" index.html || echo 0)
+          STYLE_CLOSE=$(grep -c "</style>" index.html || echo 0)
+          echo "script tags: open=$SCRIPT_OPEN close=$SCRIPT_CLOSE"
+          echo "style tags: open=$STYLE_OPEN close=$STYLE_CLOSE"
+
+          if [ "$SCRIPT_OPEN" != "$SCRIPT_CLOSE" ] || [ "$STYLE_OPEN" != "$STYLE_CLOSE" ]; then
+            echo "❌ HTML 标签不匹配！"
+            exit 1
+          fi
+          echo "✅ HTML 标签配对正确"
+
+      - name: 检查 CDN 依赖
+        run: |
+          echo "检查 CDN 外部依赖..."
+          if grep -q "mammoth" index.html; then
+            echo "✅ mammoth.js 已包含"
+          else
+            echo "⚠️ 未找到 mammoth.js"
+          fi
+
+      - name: 检查删除的 PDF 功能
+        run: |
+          echo "验证 PDF 功能已删除..."
+          if grep -q "parsePDF\|pdfjsLib\|Tesseract" index.html; then
+            echo "❌ 发现 PDF 相关代码，应已删除！"
+            exit 1
+          fi
+          echo "✅ PDF 代码已清理"
+
+      - name: 检查关键函数存在
+        run: |
+          echo "检查关键函数实现..."
+          FUNCS=("buildGrid" "parseScheduleTable" "extractCoursesFromCell" "generateICS" "parseDocx")
+          for func in "${FUNCS[@]}"; do
+            if grep -q "function $func\|$func\s*=\s*function\|$func\s*(" index.html; then
+              echo "✅ $func 存在"
+            else
+              echo "⚠️ $func 未找到"
+            fi
+          done
+
+  markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 检查 Markdown 文件
+        run: |
+          echo "检查 README.md..."
+          test -f README.md && wc -l README.md || echo "❌ README.md 不存在"
+          echo ""
+          echo "✅ 文档检查完成"

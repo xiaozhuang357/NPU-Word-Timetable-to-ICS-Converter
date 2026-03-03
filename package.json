@@ -1,0 +1,51 @@
+{
+    "name": "course-schedule-ics-generator",
+    "version": "1.0.0",
+    "description": "A web tool to convert Word course schedules to iOS/macOS calendar .ics files",
+    "main": "index.html",
+    "type": "module",
+    "keywords": [
+        "course-schedule",
+        "ics",
+        "calendar",
+        "ios",
+        "macos",
+        "google-calendar",
+        "word-parser",
+        "education"
+    ],
+    "author": "Course Schedule ICS Generator Contributors",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/your-username/ics.git"
+    },
+    "homepage": "https://github.com/your-username/ics",
+    "bugs": {
+        "url": "https://github.com/your-username/ics/issues"
+    },
+    "scripts": {
+        "dev": "npx http-server -p 8080 -c-1",
+        "serve": "npx http-server",
+        "test": "echo \"暂无自动测试\" && exit 0"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "http-server": "^14.1.1"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    },
+    "browserslist": [
+        "last 2 versions",
+        "> 1%",
+        "IE 11"
+    ],
+    "files": [
+        "index.html",
+        "README.md",
+        "LICENSE",
+        "CONTRIBUTING.md",
+        "CHANGELOG.md"
+    ]
+}
