@@ -1404,7 +1404,7 @@
                 // 或单独的关键词行：全校、公共课、学位课、社会实践等
                 const isDescLine = /^\d+院|级.*(必修|选修|课堂)|^20\d{2}[\s级年]/.test(line)
                     || (/^\d/.test(line) && /本科|专科|研究生|全校|公共课/.test(line))
-                    || /^(全校|公共课|学位课|社会实践|集中|实践)$/.test(line);
+                    || /^(全校|公共课|学位课|社会实践|集中|实践|全校本科生)$/.test(line);
 
                 if (!isEntry && !isWeekLine && !isRoomLine && !isDescLine
                     && line.length >= 2 && /[\u4e00-\u9fa5a-zA-Z]/.test(line)
