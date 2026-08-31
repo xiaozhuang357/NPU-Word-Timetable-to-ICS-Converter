@@ -1,7 +1,7 @@
 {
     "name": "course-schedule-ics-generator",
-    "version": "1.0.0",
-    "description": "A web tool to convert Word course schedules to iOS/macOS calendar .ics files",
+    "version": "2.0.0",
+    "description": "西北工业大学长安校区 Word 课表识别与 ICS 日历生成工具",
     "main": "index.html",
     "type": "module",
     "keywords": [
@@ -18,31 +18,40 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/your-username/ics.git"
+        "url": "https://github.com/xiaozhuang357/NPU-Word-Timetable-to-ICS-Converter.git"
     },
-    "homepage": "https://github.com/your-username/ics",
+    "homepage": "https://github.com/xiaozhuang357/NPU-Word-Timetable-to-ICS-Converter",
     "bugs": {
-        "url": "https://github.com/your-username/ics/issues"
+        "url": "https://github.com/xiaozhuang357/NPU-Word-Timetable-to-ICS-Converter/issues"
     },
     "scripts": {
-        "dev": "npx http-server -p 8080 -c-1",
-        "serve": "npx http-server",
-        "test": "echo \"暂无自动测试\" && exit 0"
+        "dev": "vite --host 127.0.0.1 --port 8080",
+        "build": "vite build && node scripts/write-worker.mjs",
+        "preview": "vite preview --host 127.0.0.1 --port 8080",
+        "test": "node --test",
+        "check": "node --check app.js && node --check schedule-core.js && node --test"
     },
-    "dependencies": {},
+    "dependencies": {
+        "mammoth": "^1.12.2"
+    },
     "devDependencies": {
-        "http-server": "^14.1.1"
+        "@openai/sites-vite-plugin": "^0.2.0",
+        "linkedom": "^0.18.12",
+        "vite": "^8.2.2"
     },
     "engines": {
-        "node": ">=14.0.0"
+        "node": ">=22.13.0"
     },
     "browserslist": [
         "last 2 versions",
-        "> 1%",
-        "IE 11"
+        "> 1%"
     ],
     "files": [
         "index.html",
+        "app.js",
+        "schedule-core.js",
+        "styles.css",
+        "public/vendor/mammoth.browser.min.js",
         "README.md",
         "LICENSE",
         "CONTRIBUTING.md",

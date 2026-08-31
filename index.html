@@ -1,1964 +1,309 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>课表 → iOS 日历 ICS 生成器</title>
-    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
-    <style>
-        :root {
-            --primary: #2d6a4f;
-            --primary-light: #52b788;
-            --primary-pale: #d8f3dc;
-            --accent: #f77f00;
-            --accent-light: #ffc971;
-            --bg: #f8faf9;
-            --card: #ffffff;
-            --text: #1a1a2e;
-            --text-mute: #6b7c8a;
-            --border: #d0e8d9;
-            --danger: #d62828;
-            --shadow: 0 2px 16px rgba(45, 106, 79, 0.10);
-            --radius: 14px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        /* ── Header ── */
-        header {
-            background: var(--primary);
-            color: #fff;
-            padding: 20px 32px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        header .logo {
-            width: 42px;
-            height: 42px;
-            background: rgba(255, 255, 255, 0.18);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-        }
-
-        header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: .5px;
-        }
-
-        header p {
-            font-size: 13px;
-            opacity: .75;
-            margin-top: 2px;
-        }
-
-        /* ── Main Layout ── */
-        .container {
-            max-width: 1100px;
-            margin: 32px auto;
-            padding: 0 20px;
-        }
-
-        .steps {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 28px;
-            flex-wrap: wrap;
-        }
-
-        .step-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 100px;
-            padding: 6px 16px;
-            font-size: 13px;
-            color: var(--text-mute);
-            cursor: default;
-            transition: all .2s;
-        }
-
-        .step-badge.active {
-            border-color: var(--primary-light);
-            background: var(--primary-pale);
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .step-badge .num {
-            width: 22px;
-            height: 22px;
-            background: var(--border);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .step-badge.active .num {
-            background: var(--primary-light);
-            color: #fff;
-        }
-
-        /* ── Card ── */
-        .card {
-            background: var(--card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 28px 32px;
-            margin-bottom: 24px;
-            border: 1px solid var(--border);
-        }
-
-        .card-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary);
-        }
-
-        .card-title .icon {
-            font-size: 20px;
-        }
-
-        /* ── Upload Zone ── */
-        .upload-zone {
-            border: 2.5px dashed var(--primary-light);
-            border-radius: 12px;
-            padding: 48px 24px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .2s;
-            background: var(--primary-pale);
-            position: relative;
-        }
-
-        .upload-zone:hover,
-        .upload-zone.drag-over {
-            border-color: var(--primary);
-            background: #c7ebd1;
-        }
-
-        .upload-zone input[type=file] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .upload-zone .upload-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .upload-zone h3 {
-            font-size: 16px;
-            color: var(--primary);
-            margin-bottom: 6px;
-        }
-
-        .upload-zone p {
-            font-size: 13px;
-            color: var(--text-mute);
-        }
-
-        .upload-zone .file-name {
-            margin-top: 12px;
-            font-size: 14px;
-            color: var(--primary);
-            font-weight: 600;
-            display: none;
-        }
-
-        /* ── Config Grid ── */
-        .config-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-mute);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: .4px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            color: var(--text);
-            background: var(--bg);
-            outline: none;
-            transition: border-color .2s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: var(--primary-light);
-            background: #fff;
-        }
-
-        /* ── Period table config ── */
-        .period-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 40px;
-            height: 22px;
-            cursor: pointer;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            inset: 0;
-            background: #ccc;
-            border-radius: 22px;
-            transition: .2s;
-        }
-
-        .toggle-slider:before {
-            content: '';
-            position: absolute;
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background: #fff;
-            border-radius: 50%;
-            transition: .2s;
-        }
-
-        .toggle-switch input:checked+.toggle-slider {
-            background: var(--primary-light);
-        }
-
-        .toggle-switch input:checked+.toggle-slider:before {
-            transform: translateX(18px);
-        }
-
-        .period-table-wrap {
-            overflow-x: auto;
-        }
-
-        .period-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .period-table th {
-            background: var(--primary-pale);
-            color: var(--primary);
-            padding: 8px 12px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        .period-table td {
-            padding: 6px 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .period-table input {
-            width: 90px;
-            padding: 4px 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 13px;
-            text-align: center;
-        }
-
-        /* ── Btn ── */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 28px;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all .18s;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #1e4d38;
-            transform: translateY(-1px);
-        }
-
-        .btn-accent {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .btn-accent:hover {
-            background: #d46800;
-            transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            border: 1.5px solid var(--border);
-            color: var(--text-mute);
-        }
-
-        .btn-ghost:hover {
-            border-color: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .btn:disabled {
-            opacity: .45;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        /* ── Preview Timetable ── */
-        #preview-section {
-            display: none;
-        }
-
-        .timetable-wrap {
-            overflow-x: auto;
-        }
-
-        .timetable {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12.5px;
-            min-width: 700px;
-        }
-
-        .timetable th {
-            background: var(--primary);
-            color: #fff;
-            padding: 10px 8px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .timetable .time-col {
-            width: 90px;
-        }
-
-        .timetable td {
-            border: 1px solid var(--border);
-            padding: 4px 6px;
-            vertical-align: top;
-            min-height: 40px;
-        }
-
-        .timetable td.time-cell {
-            text-align: center;
-            background: var(--primary-pale);
-            font-size: 11px;
-            color: var(--primary);
-            font-weight: 600;
-            vertical-align: middle;
-        }
-
-        .course-chip {
-            background: var(--primary-light);
-            color: #fff;
-            border-radius: 8px;
-            padding: 5px 7px;
-            margin: 2px 0;
-            font-size: 11.5px;
-            line-height: 1.4;
-            cursor: pointer;
-            transition: background .15s;
-            position: relative;
-        }
-
-        .course-chip:hover {
-            background: var(--primary);
-        }
-
-        .course-chip .chip-name {
-            font-weight: 700;
-        }
-
-        .course-chip .chip-room {
-            opacity: .85;
-            font-size: 10.5px;
-        }
-
-        .course-chip .chip-weeks {
-            opacity: .75;
-            font-size: 10px;
-        }
-
-        .course-chip .chip-del {
-            position: absolute;
-            top: 3px;
-            right: 4px;
-            background: rgba(0, 0, 0, .25);
-            border-radius: 50%;
-            width: 14px;
-            height: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity .15s;
-        }
-
-        .course-chip:hover .chip-del {
-            opacity: 1;
-        }
-
-        /* ── Course Edit Modal ── */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .45);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
-        .modal {
-            background: #fff;
-            border-radius: 16px;
-            padding: 28px;
-            width: 420px;
-            max-width: 96vw;
-            box-shadow: 0 8px 48px rgba(0, 0, 0, .2);
-            animation: popIn .2s ease;
-        }
-
-        @keyframes popIn {
-            from {
-                transform: scale(.92);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .modal h3 {
-            font-size: 17px;
-            margin-bottom: 18px;
-            color: var(--primary);
-        }
-
-        .modal .form-group {
-            margin-bottom: 14px;
-        }
-
-        .modal .btn-row {
-            margin-top: 18px;
-            justify-content: flex-end;
-        }
-
-        /* ── Add Course ── */
-        .add-course-btn {
-            width: 100%;
-            padding: 8px;
-            background: var(--primary-pale);
-            border: 2px dashed var(--primary-light);
-            border-radius: 8px;
-            color: var(--primary);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .15s;
-        }
-
-        .add-course-btn:hover {
-            background: #c7ebd1;
-        }
-
-        /* ── Week Selector ── */
-        .week-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .week-chip {
-            padding: 4px 10px;
-            border-radius: 100px;
-            font-size: 12px;
-            cursor: pointer;
-            border: 1.5px solid var(--border);
-            background: #fff;
-            color: var(--text-mute);
-            transition: all .15s;
-            user-select: none;
-        }
-
-        .week-chip.on {
-            background: var(--primary-light);
-            border-color: var(--primary-light);
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .week-chip.odd-only {
-            border-style: dashed;
-        }
-
-        /* ── Toast ── */
-        #toast {
-            position: fixed;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%) translateY(16px);
-            background: #1a1a2e;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 100px;
-            font-size: 14px;
-            opacity: 0;
-            transition: all .3s;
-            pointer-events: none;
-            z-index: 9999;
-        }
-
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* ── Stat bar ── */
-        .stat-bar {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            background: var(--primary-pale);
-            border-radius: 10px;
-            padding: 12px 20px;
-            min-width: 110px;
-        }
-
-        .stat-item .val {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .stat-item .lbl {
-            font-size: 12px;
-            color: var(--text-mute);
-            margin-top: 2px;
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 600px) {
-            .container {
-                padding: 0 12px;
-            }
-
-            .card {
-                padding: 20px 16px;
-            }
-
-            header {
-                padding: 16px 20px;
-            }
-        }
-
-        /* ── Parse progress ── */
-        .parse-log {
-            background: #f0f4f0;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 12px;
-            color: var(--text-mute);
-            margin-top: 14px;
-            max-height: 140px;
-            overflow-y: auto;
-            font-family: monospace;
-            display: none;
-        }
-
-        .parse-log .ok {
-            color: var(--primary);
-        }
-
-        .parse-log .warn {
-            color: var(--accent);
-        }
-
-        .parse-log .err {
-            color: var(--danger);
-        }
-
-        .tag {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-left: 6px;
-        }
-
-        .tag-new {
-            background: #d8f3dc;
-            color: var(--primary);
-        }
-
-        .tag-tip {
-            background: #fff3cd;
-            color: #856404;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f5f7">
+    <meta name="description" content="为西北工业大学长安校区定制的课表识别与 ICS 日历生成工具">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="翱翔课表 · NPU Calendar">
+    <meta property="og:description" content="识别西工大长安校区 Word 课表，核对后生成适配主流日历应用的 ICS 文件。">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="翱翔课表 · NPU Calendar">
+    <meta name="twitter:description" content="识别西工大长安校区 Word 课表，核对后生成适配主流日历应用的 ICS 文件。">
+    <title>翱翔课表 · NPU Calendar</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="/vendor/mammoth.browser.min.js" defer></script>
+    <script type="module" src="./app.js"></script>
 </head>
 
 <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
 
-    <!-- Header -->
-    <header>
-        <div class="logo">📅</div>
-        <div>
-            <h1>课表 ICS 生成器</h1>
-            <p>导入 Word 课程表 · 生成 .ics 日历文件</p>
+    <header class="topbar">
+        <a class="brand" href="#top" aria-label="返回顶部">
+            <span class="brand-mark" aria-hidden="true"><span>N</span></span>
+            <span class="brand-copy">
+                <strong>翱翔课表</strong>
+                <small>NPU Calendar</small>
+            </span>
+        </a>
+        <div class="topbar-actions">
+            <span class="privacy-pill">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+                文件仅在本机处理
+            </span>
+            <button class="icon-button" id="theme-toggle" type="button" aria-label="切换深浅色模式" title="切换深浅色模式">
+                <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+            </button>
         </div>
     </header>
 
-    <!-- Steps -->
-    <div class="container">
-        <div class="steps">
-            <div class="step-badge active" id="step1-badge">
-                <span class="num">1</span> 导入课表
+    <main class="app-shell" id="top">
+        <section class="hero" aria-labelledby="page-title">
+            <div class="hero-copy">
+                <span class="eyebrow"><span class="eyebrow-dot"></span>西北工业大学 · 长安校区专版</span>
+                <h1 id="page-title">一份课表，<br><span>准时落进日历。</span></h1>
+                <p>识别教务系统 Word 课表，自动拆分周次、教师与教室。导出前逐项校验，再生成适配 iPhone、Mac 和主流日历应用的 ICS 文件。</p>
             </div>
-            <div class="step-badge" id="step2-badge">
-                <span class="num">2</span> 配置学期
+            <div class="hero-proof" aria-label="工具能力">
+                <div class="proof-item">
+                    <span class="proof-icon blue" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 5h16v15H4zM8 3v4M16 3v4M4 9h16"/></svg>
+                    </span>
+                    <div><strong>长安校区作息</strong><small>内置第 1–13 节官方时间</small></div>
+                </div>
+                <div class="proof-item">
+                    <span class="proof-icon violet" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m12 3 2.4 4.9L20 9l-4 3.9.9 5.5L12 15.8 7.1 18.4 8 12.9 4 9l5.6-1.1L12 3Z"/></svg>
+                    </span>
+                    <div><strong>智能纠错</strong><small>拦截周次黏连与时间冲突</small></div>
+                </div>
+                <div class="proof-item">
+                    <span class="proof-icon green" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"/></svg>
+                    </span>
+                    <div><strong>隐私优先</strong><small>不上传课表，不保存个人信息</small></div>
+                </div>
             </div>
-            <div class="step-badge" id="step3-badge">
-                <span class="num">3</span> 预览编辑
-            </div>
-            <div class="step-badge" id="step4-badge">
-                <span class="num">4</span> 导出 ICS
-            </div>
-        </div>
+        </section>
 
-        <!-- Step 1: Upload -->
-        <div class="card" id="upload-card">
-            <div class="card-title"><span class="icon">📂</span> 上传课表文件</div>
-            <div class="upload-zone" id="upload-zone">
-                <input type="file" id="file-input" accept=".docx,.doc" />
-                <div class="upload-icon" id="upload-icon">📄</div>
-                <h3 id="upload-hint">点击或拖拽 .docx 文件到此处</h3>
-                <p id="upload-desc">支持标准教务系统导出的 Word 课程表（含合并单元格）</p>
-                <div class="file-name" id="file-name"></div>
-            </div>
-            <div class="parse-log" id="parse-log"></div>
-            <div id="debug-grid-wrap" style="display:none;margin-top:12px;">
-                <div style="font-size:12px;font-weight:600;color:var(--text-mute);margin-bottom:6px;">
-                    原始表格结构（调试用，绿色=origin原始格，灰色=rowspan填充格）</div>
-                <div id="debug-grid"
-                    style="overflow:auto;max-height:320px;font-size:10px;font-family:monospace;border:1px solid var(--border);border-radius:8px;background:#fafafa;padding:8px;">
-                </div>
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-primary" id="parse-btn" disabled onclick="parseCourses()">
-                    🔍 识别课程
-                </button>
-                <button class="btn btn-ghost" onclick="showManualAdd()">
-                    ✏️ 手动添加
-                </button>
-                <button class="btn btn-ghost" id="debug-btn" style="display:none" onclick="toggleDebugGrid()">
-                    🔬 查看表格结构
-                </button>
-            </div>
-        </div>
+        <nav class="flow-nav" aria-label="生成步骤">
+            <div class="flow-step is-active" data-step="1"><span>1</span><strong>导入</strong><small>选择课表</small></div>
+            <i aria-hidden="true"></i>
+            <div class="flow-step" data-step="2"><span>2</span><strong>识别</strong><small>自动拆分</small></div>
+            <i aria-hidden="true"></i>
+            <div class="flow-step" data-step="3"><span>3</span><strong>核对</strong><small>排除异常</small></div>
+            <i aria-hidden="true"></i>
+            <div class="flow-step" data-step="4"><span>4</span><strong>导出</strong><small>写入日历</small></div>
+        </nav>
 
-        <!-- Step 2: Config -->
-        <div class="card">
-            <div class="card-title"><span class="icon">⚙️</span> 学期配置</div>
-            <div class="config-grid">
-                <div class="form-group">
-                    <label>第一周周一日期</label>
-                    <input type="date" id="start-date" value="2026-02-23" />
+        <section class="workspace-grid" aria-label="课表导入和学期设置">
+            <article class="glass-panel upload-panel">
+                <div class="panel-heading">
+                    <div>
+                        <span class="panel-kicker">第一步</span>
+                        <h2>导入 Word 课表</h2>
+                    </div>
+                    <span class="local-badge"><span></span>本地识别</span>
                 </div>
-                <div class="form-group">
-                    <label>起始周次</label>
-                    <input type="number" id="start-week" value="1" min="1" max="30" />
-                </div>
-                <div class="form-group">
-                    <label>总周数</label>
-                    <input type="number" id="total-weeks" value="18" min="1" max="40" />
-                </div>
-                <div class="form-group">
-                    <label>学期名称</label>
-                    <input type="text" id="semester-name" value="2025-2026秋" />
-                </div>
-            </div>
 
-            <!-- Custom rooms -->
-            <div style="margin-top: 20px;">
-                <div class="period-toggle">
-                    <span style="font-weight:600; font-size:14px;">自定义上课地点</span>
-                    <span class="tag tag-tip">可选</span>
-                    <label class="toggle-switch" style="margin-left: auto;">
-                        <input type="checkbox" id="show-rooms"
-                            onchange="document.getElementById('rooms-wrap').style.display=this.checked?'block':'none'" />
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span style="font-size:13px; color:var(--text-mute);">展开编辑</span>
-                </div>
-                <div id="rooms-wrap" style="display:none;">
-                    <p style="font-size:12.5px; color:var(--text-mute); margin:8px 0 6px;">
-                        输入额外的上课地点关键词，用逗号或换行分隔。系统已内置常见地点（如“教西D-101”“实验楼”“体育馆”等），这里只需填写未被识别的地点。
-                    </p>
-                    <textarea id="custom-rooms" rows="3" placeholder="例如：游泳馆, 翔宇楼, 逸夫楼"
-                        style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;resize:vertical;font-family:inherit;"></textarea>
-                </div>
-            </div>
+                <label class="drop-zone" id="drop-zone" for="file-input">
+                    <input id="file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    <span class="upload-orb" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg>
+                    </span>
+                    <span class="drop-copy">
+                        <strong id="drop-title">拖入课表，或点击选择</strong>
+                        <small id="drop-subtitle">支持教务系统导出的 .docx 文件</small>
+                    </span>
+                    <span class="select-file">选择文件</span>
+                </label>
 
-            <!-- Period times -->
-            <div style="margin-top: 20px;">
-                <div class="period-toggle">
-                    <span style="font-weight:600; font-size:14px;">节次时间表</span>
-                    <span class="tag tag-tip">可自定义</span>
-                    <label class="toggle-switch" style="margin-left: auto;">
-                        <input type="checkbox" id="show-periods"
-                            onchange="document.getElementById('periods-wrap').style.display=this.checked?'block':'none'" />
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span style="font-size:13px; color:var(--text-mute);">展开编辑</span>
+                <div class="parse-state" id="parse-state" hidden aria-live="polite">
+                    <div class="parse-state-row">
+                        <span class="state-icon" id="state-icon" aria-hidden="true"></span>
+                        <div>
+                            <strong id="state-title">正在读取课表</strong>
+                            <small id="state-detail">分析表格结构与合并单元格…</small>
+                        </div>
+                        <span class="state-percent" id="state-percent">0%</span>
+                    </div>
+                    <div class="progress-track"><span id="progress-bar"></span></div>
                 </div>
-                <div id="periods-wrap" style="display:none;">
-                    <div class="period-table-wrap">
-                        <table class="period-table" id="period-table">
-                            <thead>
-                                <tr>
-                                    <th>节次</th>
-                                    <th>开始时间</th>
-                                    <th>结束时间</th>
-                                    <th>段次</th>
-                                </tr>
-                            </thead>
-                            <tbody id="period-tbody"></tbody>
-                        </table>
+
+                <div class="upload-actions">
+                    <button class="button button-secondary" id="demo-button" type="button">查看示例结果</button>
+                    <div>
+                        <button class="text-button" id="manual-add-start" type="button">手动添加</button>
+                        <button class="text-button" id="reparse-button" type="button" hidden>重新识别</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Step 3: Preview -->
-        <div id="preview-section">
-            <div class="card">
-                <div class="card-title"><span class="icon">📋</span> 课程预览 &amp; 编辑</div>
-                <div class="stat-bar" id="stat-bar"></div>
-                <div class="timetable-wrap">
-                    <table class="timetable" id="timetable"></table>
+                <details class="diagnostics" id="diagnostics" hidden>
+                    <summary>查看识别详情</summary>
+                    <div class="diagnostic-content">
+                        <ol id="parse-log"></ol>
+                        <div class="debug-grid" id="debug-grid"></div>
+                    </div>
+                </details>
+            </article>
+
+            <article class="glass-panel settings-panel">
+                <div class="panel-heading">
+                    <div>
+                        <span class="panel-kicker">第二步</span>
+                        <h2>确认学期信息</h2>
+                    </div>
+                    <span class="preset-badge">长安校区</span>
                 </div>
-                <div class="btn-row">
-                    <button class="btn btn-ghost" onclick="showManualAdd()">➕ 添加课程</button>
-                    <button class="btn btn-accent" onclick="generateICS()">⬇️ 生成并下载 ICS</button>
+
+                <div class="settings-form">
+                    <label class="field field-wide">
+                        <span>学期</span>
+                        <select id="semester-preset">
+                            <option value="2026-2027秋">2026–2027 秋季学期</option>
+                            <option value="custom">自定义学期</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>第 1 周周一</span>
+                        <input id="start-date" type="date" value="2026-08-31">
+                    </label>
+                    <label class="field">
+                        <span>教学周数</span>
+                        <div class="input-suffix"><input id="total-weeks" type="number" min="1" max="30" value="18"><b>周</b></div>
+                    </label>
+                    <label class="field field-wide">
+                        <span>日历名称</span>
+                        <input id="semester-name" type="text" value="2026–2027 秋 · 西工大" maxlength="40">
+                    </label>
+                </div>
+
+                <div class="settings-note">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+                    <p><strong>已采用长安校区作息</strong><span>第 13 节为 20:40–21:25；仍可在高级设置中逐节调整。</span></p>
+                </div>
+
+                <details class="advanced-settings">
+                    <summary>
+                        <span>高级识别与节次设置</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
+                    </summary>
+                    <div class="advanced-content">
+                        <label class="field field-wide">
+                            <span>补充地点关键词 <small>可选，用逗号或换行分隔</small></span>
+                            <textarea id="custom-rooms" rows="2" placeholder="例如：航海楼、生态餐厅三楼"></textarea>
+                        </label>
+                        <div class="period-heading">
+                            <div><strong>节次时间</strong><small>西北工业大学长安校区默认值</small></div>
+                            <button class="text-button" id="reset-periods" type="button">恢复默认</button>
+                        </div>
+                        <div class="period-list" id="period-list"></div>
+                    </div>
+                </details>
+            </article>
+        </section>
+
+        <section class="review-section" id="review-section" hidden aria-labelledby="review-title">
+            <div class="review-heading">
+                <div>
+                    <span class="panel-kicker">第三步</span>
+                    <h2 id="review-title">核对识别结果</h2>
+                    <p id="review-subtitle">每项内容都可以点击修改，确认无误后再导出。</p>
+                </div>
+                <div class="review-actions">
+                    <button class="button button-secondary" id="add-course" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        添加课程
+                    </button>
+                    <button class="button button-primary" id="export-button" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+                        导出 ICS
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Info about format -->
-        <div class="card" id="format-hint">
-            <div class="card-title"><span class="icon">💡</span> Word 课表格式说明</div>
-            <p style="font-size:13.5px; line-height:1.9; color:var(--text-mute);">
-                本工具支持以下常见教务系统课表格式：<br>
-                &bull; <strong>表格式课表</strong>：行为节次（第1-13节），列为星期一至星期日，每格内含课程名称、教师姓名、教室、周次信息<br>
-                &bull; <strong>支持同一时段多课程</strong>：同一单元格内不同周次有不同课程时，能正确拆分<br>
-                &bull; 典型单元格格式：<code>课程名\n(周次) (节次) 教室 教师</code><br>
-                &bull; 若教室未被识别，可在「自定义上课地点」中添加关键词<br>
-                &bull; 若解析失败，可使用「手动添加」按钮逐条录入课程<br>
-                &bull; 生成的 .ics 文件可直接导入 iPhone 日历、macOS 日历、Google Calendar 等
-            </p>
-        </div>
-    </div>
+            <div class="stat-grid" id="stat-grid"></div>
 
-    <!-- ── Course Edit Modal ── -->
-    <div class="modal-overlay" id="modal-overlay">
-        <div class="modal">
-            <h3 id="modal-title">添加课程</h3>
-            <div class="form-group">
-                <label>课程名称 *</label>
-                <input type="text" id="m-name" placeholder="如：计算机网络" />
-            </div>
-            <div class="form-group">
-                <label>教室</label>
-                <input type="text" id="m-room" placeholder="如：教西C1-301" />
-            </div>
-            <div class="form-group">
-                <label>教师</label>
-                <input type="text" id="m-teacher" placeholder="选填" />
-            </div>
-            <div class="form-group">
-                <label>星期</label>
-                <select id="m-day">
-                    <option value="1">周一</option>
-                    <option value="2">周二</option>
-                    <option value="3">周三</option>
-                    <option value="4">周四</option>
-                    <option value="5">周五</option>
-                    <option value="6">周六</option>
-                    <option value="0">周日</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>节次（开始节）</label>
-                <select id="m-start-period">
-                    <option value="1">第1节 08:30 - 09:15</option>
-                    <option value="2">第2节 09:25 - 10:10</option>
-                    <option value="3">第3节 10:30 - 11:15</option>
-                    <option value="4">第4节 11:25 - 12:10</option>
-                    <option value="5">第5节 12:20 - 13:05</option>
-                    <option value="6">第6节 13:15 - 14:00</option>
-                    <option value="7">第7节 14:10 - 14:55</option>
-                    <option value="8">第8节 15:05 - 15:50</option>
-                    <option value="9">第9节 16:00 - 16:45</option>
-                    <option value="10">第10节 16:55 - 17:40</option>
-                    <option value="11">第11节 19:00 - 19:45</option>
-                    <option value="12">第12节 19:55 - 20:40</option>
-                    <option value="13">第13节 20:50 - 21:35</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>节次（结束节）</label>
-                <select id="m-end-period">
-                    <option value="1">第1节 08:30 - 09:15</option>
-                    <option value="2">第2节 09:25 - 10:10</option>
-                    <option value="3">第3节 10:30 - 11:15</option>
-                    <option value="4">第4节 11:25 - 12:10</option>
-                    <option value="5">第5节 12:20 - 13:05</option>
-                    <option value="6">第6节 13:15 - 14:00</option>
-                    <option value="7">第7节 14:10 - 14:55</option>
-                    <option value="8">第8节 15:05 - 15:50</option>
-                    <option value="9">第9节 16:00 - 16:45</option>
-                    <option value="10">第10节 16:55 - 17:40</option>
-                    <option value="11">第11节 19:00 - 19:45</option>
-                    <option value="12">第12节 19:55 - 20:40</option>
-                    <option value="13">第13节 20:50 - 21:35</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>上课周次 <span class="tag tag-tip">点击选择</span></label>
-                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
-                    <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;"
-                        onclick="setAllWeeks(true)">全选</button>
-                    <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;"
-                        onclick="setAllWeeks(false)">清空</button>
-                    <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;"
-                        onclick="setOddWeeks()">单周</button>
-                    <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;"
-                        onclick="setEvenWeeks()">双周</button>
-                    <input type="text" id="m-weeks-text" placeholder="或输入: 1-16 或 1,3,5-8"
-                        style="flex:1; min-width:120px; padding:4px 10px; border:1.5px solid var(--border); border-radius:6px; font-size:12px;"
-                        oninput="parseWeekText(this.value)" />
+            <div class="quality-card" id="quality-card">
+                <div class="quality-gauge" id="quality-gauge"><span id="quality-score">--</span><small>识别质量</small></div>
+                <div class="quality-copy">
+                    <strong id="quality-title">等待识别结果</strong>
+                    <p id="quality-detail">上传课表后，这里会列出需要人工核对的项目。</p>
                 </div>
-                <div class="week-chips" id="week-chips"></div>
+                <button class="text-button" id="toggle-issues" type="button" hidden>查看问题</button>
             </div>
-            <div class="btn-row">
-                <button class="btn btn-ghost" onclick="closeModal()">取消</button>
-                <button class="btn btn-primary" onclick="submitCourse()">保存</button>
+            <div class="issue-list" id="issue-list" hidden></div>
+
+            <article class="schedule-panel">
+                <div class="schedule-toolbar">
+                    <div>
+                        <h3>周课表预览</h3>
+                        <p>课程卡片按节次排列；点击即可修改。</p>
+                    </div>
+                    <label class="compact-field">
+                        <span>显示</span>
+                        <select id="week-filter"><option value="all">全部周次</option></select>
+                    </label>
+                </div>
+                <div class="day-tabs" id="day-tabs" role="tablist" aria-label="选择星期"></div>
+                <div class="schedule-scroll">
+                    <div class="schedule-grid" id="schedule-grid" aria-label="课程表"></div>
+                </div>
+                <div class="agenda-list" id="agenda-list"></div>
+            </article>
+
+            <article class="course-list-panel">
+                <div class="schedule-toolbar">
+                    <div>
+                        <h3>课程明细</h3>
+                        <p>同一课程更换教师、教室或节次时会分开保留。</p>
+                    </div>
+                    <button class="text-button danger-text" id="clear-courses" type="button">清空结果</button>
+                </div>
+                <div class="course-list" id="course-list"></div>
+            </article>
+        </section>
+
+        <section class="confidence-strip" aria-label="识别能力说明">
+            <div>
+                <span class="strip-number">01</span>
+                <p><strong>周次不会再黏进课程名</strong><small>“10-17大学英语核心能力”会拆为课程名与第 10–17 周。</small></p>
             </div>
-        </div>
-    </div>
-
-    <div id="toast"></div>
-
-    <script>
-        // ══════════════════════════════════════════════
-        //  DATA
-        // ══════════════════════════════════════════════
-        const PERIODS = [
-            { n: 1, start: '08:30', end: '09:15', label: '上午' },
-            { n: 2, start: '09:25', end: '10:10', label: '上午' },
-            { n: 3, start: '10:30', end: '11:15', label: '上午' },
-            { n: 4, start: '11:25', end: '12:10', label: '上午' },
-            { n: 5, start: '12:20', end: '13:05', label: '中午' },
-            { n: 6, start: '13:05', end: '13:50', label: '中午' },
-            { n: 7, start: '14:00', end: '14:45', label: '下午' },
-            { n: 8, start: '14:55', end: '15:40', label: '下午' },
-            { n: 9, start: '16:00', end: '16:45', label: '下午' },
-            { n: 10, start: '16:55', end: '17:40', label: '下午' },
-            { n: 11, start: '19:00', end: '19:45', label: '晚上' },
-            { n: 12, start: '19:55', end: '20:40', label: '晚上' },
-            { n: 13, start: '20:50', end: '21:35', label: '晚上' },
-        ];
-
-        const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        // day index 1=Mon … 7=Sun (matching DAYS array 0-indexed)
-
-        let courses = []; // [{id, name, room, teacher, day(1-7), startPeriod, endPeriod, weeks:[1,2,...]}]
-        let editingId = null;
-        let weekSelState = []; // bool array indexed 0=week1
-
-        // ══════════════════════════════════════════════
-        //  INIT
-        // ══════════════════════════════════════════════
-        window.addEventListener('DOMContentLoaded', () => {
-            initPeriodTable();
-            initWeekChips();
-            initUpload();
-        });
-
-        function initPeriodTable() {
-            const tbody = document.getElementById('period-tbody');
-            PERIODS.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-      <td>第${p.n}节</td>
-      <td><input type="time" value="${p.start}" data-period="${p.n}" data-type="start" onchange="updatePeriod(${p.n},'start',this.value)" /></td>
-      <td><input type="time" value="${p.end}"  data-period="${p.n}" data-type="end"   onchange="updatePeriod(${p.n},'end',this.value)" /></td>
-      <td style="color:var(--text-mute)">${p.label}</td>`;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function updatePeriod(n, type, val) {
-            const p = PERIODS.find(x => x.n === n);
-            if (p) p[type] = val;
-        }
-
-        function initWeekChips() {
-            const total = parseInt(document.getElementById('total-weeks').value) || 18;
-            weekSelState = Array(total).fill(true);
-            renderWeekChips();
-            document.getElementById('total-weeks').addEventListener('change', () => {
-                const t = parseInt(document.getElementById('total-weeks').value) || 18;
-                weekSelState = Array(t).fill(true);
-                renderWeekChips();
-            });
-        }
-
-        function renderWeekChips() {
-            const total = weekSelState.length;
-            const container = document.getElementById('week-chips');
-            container.innerHTML = '';
-            for (let i = 0; i < total; i++) {
-                const btn = document.createElement('span');
-                btn.className = 'week-chip' + (weekSelState[i] ? ' on' : '');
-                btn.textContent = `第${i + 1}周`;
-                btn.onclick = () => { weekSelState[i] = !weekSelState[i]; renderWeekChips(); };
-                container.appendChild(btn);
-            }
-        }
-
-        function setAllWeeks(v) { weekSelState = weekSelState.map(() => v); renderWeekChips(); }
-        function setOddWeeks() { weekSelState = weekSelState.map((_, i) => (i + 1) % 2 === 1); renderWeekChips(); }
-        function setEvenWeeks() { weekSelState = weekSelState.map((_, i) => (i + 1) % 2 === 0); renderWeekChips(); }
-        function parseWeekText(txt) {
-            if (!txt.trim()) return;
-            const total = weekSelState.length;
-            const newState = Array(total).fill(false);
-            const parts = txt.split(',');
-            parts.forEach(p => {
-                p = p.trim();
-                const m = p.match(/^(\d+)-(\d+)$/);
-                if (m) {
-                    for (let i = parseInt(m[1]); i <= parseInt(m[2]); i++) {
-                        if (i >= 1 && i <= total) newState[i - 1] = true;
-                    }
-                } else if (/^\d+$/.test(p)) {
-                    const w = parseInt(p);
-                    if (w >= 1 && w <= total) newState[w - 1] = true;
-                }
-            });
-            weekSelState = newState;
-            renderWeekChips();
-        }
-
-        // ══════════════════════════════════════════════
-        //  UPLOAD
-        // ══════════════════════════════════════════════
-        function initUpload() {
-            const zone = document.getElementById('upload-zone');
-            const input = document.getElementById('file-input');
-            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-            zone.addEventListener('drop', e => {
-                e.preventDefault(); zone.classList.remove('drag-over');
-                if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-            });
-            input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0]); });
-        }
-
-        let uploadedArrayBuffer = null;
-
-        function handleFile(file) {
-            if (!file.name.match(/\.docx?$/i)) { showToast('⚠️ 请上传 .docx 文件'); return; }
-            document.getElementById('file-name').style.display = 'block';
-            document.getElementById('file-name').textContent = '📎 ' + file.name;
-            const reader = new FileReader();
-            reader.onload = e => {
-                uploadedArrayBuffer = e.target.result;
-                document.getElementById('parse-btn').disabled = false;
-                showToast('✅ 文件已加载，点击"识别课程"开始解析');
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // ══════════════════════════════════════════════
-        //  LOG + DEBUG GRID
-        // ══════════════════════════════════════════════
-        function log(msg, type = '') {
-            const el = document.getElementById('parse-log');
-            el.style.display = 'block';
-            el.innerHTML += `<div class="${type}">${msg}</div>`;
-            el.scrollTop = el.scrollHeight;
-        }
-
-        let _lastGrid = null;
-        function toggleDebugGrid() {
-            const wrap = document.getElementById('debug-grid-wrap');
-            if (wrap.style.display === 'none') { wrap.style.display = 'block'; renderDebugGrid(); }
-            else wrap.style.display = 'none';
-        }
-        function renderDebugGrid() {
-            if (!_lastGrid) return;
-            const grid = _lastGrid;
-            const rows = Object.keys(grid).map(Number).sort((a, b) => a - b);
-            let maxCol = 0;
-            rows.forEach(r => Object.keys(grid[r]).map(Number).forEach(c => { if (c > maxCol) maxCol = c; }));
-            let html = '<table border="1" style="border-collapse:collapse;">';
-            rows.forEach(r => {
-                html += `<tr><td style="background:#e8f4fd;padding:2px 6px;font-weight:bold">R${r}</td>`;
-                for (let c = 0; c <= maxCol; c++) {
-                    const cell = grid[r][c];
-                    if (!cell) { html += '<td style="background:#eee;min-width:24px"></td>'; continue; }
-                    const bg = cell.origin ? '#f0fff4' : '#f5f5f5';
-                    const txt = escHtml((cell.text || '').replace(/\n/g, '↵').substring(0, 60));
-                    html += `<td style="background:${bg};padding:2px 4px;max-width:110px;overflow:hidden;white-space:nowrap" title="r${r}c${c} rs=${cell.rowspan}">${txt}</td>`;
-                }
-                html += '</tr>';
-            });
-            html += '</table>';
-            document.getElementById('debug-grid').innerHTML = html;
-        }
-
-        // ══════════════════════════════════════════════
-        //  PARSE DISPATCHER
-        // ══════════════════════════════════════════════
-        async function parseCourses() {
-            document.getElementById('parse-log').innerHTML = '';
-            document.getElementById('debug-grid-wrap').style.display = 'none';
-            const btn = document.getElementById('parse-btn');
-            btn.disabled = true; btn.textContent = '⏳ 解析中…';
-            log('🔄 开始解析文件…');
-            await new Promise(r => setTimeout(r, 30));
-            try {
-                let parsed = await parseDocx();
-                document.getElementById('debug-btn').style.display = 'inline-flex';
-                if (parsed.length === 0) {
-                    log('⚠️ 解析结果为空，请点击「查看表格结构」调试，或手动添加', 'warn');
-                    showToast('⚠️ 解析为空，请查看表格结构调试');
-                } else {
-                    courses = []; nextId = 1;
-                    parsed.forEach(c => addCourse(c));
-                    log(`✅ 共识别 ${parsed.length} 条课程`, 'ok');
-                    showToast(`🎉 识别完成！共 ${parsed.length} 条课程`);
-                    renderPreview(); activateStep(3);
-                }
-            } catch (err) {
-                log('❌ 解析出错：' + err.message, 'err');
-                showToast('❌ 解析出错：' + err.message.substring(0, 40));
-                console.error(err);
-            } finally {
-                btn.disabled = false; btn.innerHTML = '🔍 识别课程';
-            }
-        }
-
-        // ══════════════════════════════════════════════
-        //  PARSE DOCX
-        // ══════════════════════════════════════════════
-        async function parseDocx() {
-            const result = await mammoth.convertToHtml({ arrayBuffer: uploadedArrayBuffer });
-            log('✅ Word 文档转换完成', 'ok');
-            if (result.messages.length) result.messages.slice(0, 3).forEach(m => log('  ⚠ ' + m.message, 'warn'));
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(result.value, 'text/html');
-            const tables = doc.querySelectorAll('table');
-            log(`📊 找到 ${tables.length} 个表格`);
-            if (!tables.length) { log('❌ 未找到表格', 'err'); return []; }
-
-            let bestTable = null, bestCells = 0;
-            tables.forEach(t => {
-                const c = t.querySelectorAll('td,th').length;
-                if (c > bestCells) { bestCells = c; bestTable = t; }
-            });
-            log(`📌 选最大表格（${bestCells} 格）`);
-            return parseScheduleTable(bestTable);
-        }
-
-        //  TABLE GRID BUILDER
-        // ══════════════════════════════════════════════
-        function buildGrid(table) {
-            const grid = {};
-            const occupied = {};
-            let r = 0;
-            for (const row of table.querySelectorAll('tr')) {
-                let c = 0;
-                for (const cell of row.querySelectorAll('th, td')) {
-                    while (occupied[`${r},${c}`]) c++;
-                    const rs = Math.max(1, parseInt(cell.getAttribute('rowspan') || 1));
-                    const cs = Math.max(1, parseInt(cell.getAttribute('colspan') || 1));
-                    let parts = [];
-                    const walk = nd => {
-                        if (nd.nodeType === Node.TEXT_NODE) parts.push(nd.textContent);
-                        else if (nd.nodeName === 'BR') parts.push('\n');
-                        else {
-                            nd.childNodes.forEach(walk);
-                            if (/^(P|DIV|LI|TR)$/.test(nd.nodeName)) parts.push('\n');
-                        }
-                    };
-                    walk(cell);
-                    const text = parts.join('').replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-                    for (let dr = 0; dr < rs; dr++) {
-                        for (let dc = 0; dc < cs; dc++) {
-                            if (!grid[r + dr]) grid[r + dr] = {};
-                            occupied[`${r + dr},${c + dc}`] = true;
-                            if (dr === 0 && dc === 0) {
-                                grid[r + dr][c + dc] = { text, rowspan: rs, colspan: cs, origin: true };
-                            } else {
-                                grid[r + dr][c + dc] = { text: '', rowspan: 1, colspan: 1, origin: false };
-                            }
-                        }
-                    }
-                    c += cs;
-                }
-                r++;
-            }
-            return grid;
-        }
-
-        // ══════════════════════════════════════════════
-        //  SCHEDULE TABLE PARSER
-        // ══════════════════════════════════════════════
-        function parseScheduleTable(table) {
-            const totalWeeks = parseInt(document.getElementById('total-weeks').value) || 18;
-            const result = [];
-
-            const grid = buildGrid(table);
-            _lastGrid = grid;
-
-            const gridRows = Object.keys(grid).map(Number).sort((a, b) => a - b);
-            if (!gridRows.length) { log('❌ 表格为空', 'err'); return result; }
-            let maxCol = 0;
-            gridRows.forEach(r => Object.keys(grid[r]).map(Number).forEach(c => { if (c > maxCol) maxCol = c; }));
-            log(`📐 网格: ${gridRows.length} 行 × ${maxCol + 1} 列`);
-
-            // ── A: 找星期标题行 ──────────────────────────
-            const DAY_STRICT = [
-                [/^(周一|星期一)$/, 1], [/^(周二|星期二)$/, 2], [/^(周三|星期三)$/, 3],
-                [/^(周四|星期四)$/, 4], [/^(周五|星期五)$/, 5], [/^(周六|星期六)$/, 6],
-                [/^(周日|周天|星期日|星期天)$/, 7]
-            ];
-            const DAY_LOOSE = [
-                [/周一|星期一/, 1], [/周二|星期二/, 2], [/周三|星期三/, 3],
-                [/周四|星期四/, 4], [/周五|星期五/, 5], [/周六|星期六/, 6],
-                [/周日|周天|星期日|星期天/, 7]
-            ];
-            let dayRow = -1;
-            const dayMap = {};
-            for (const ptns of [DAY_STRICT, DAY_LOOSE]) {
-                if (dayRow !== -1) break;
-                for (const r of gridRows) {
-                    const temp = {}; let found = 0;
-                    for (const c of Object.keys(grid[r]).map(Number)) {
-                        const cell = grid[r][c];
-                        if (!cell || !cell.origin) continue;
-                        const t = (cell.text || '').trim().replace(/\s+/g, '');
-                        for (const [re, dn] of ptns) { if (re.test(t)) { temp[c] = dn; found++; break; } }
-                    }
-                    if (found >= 3) { dayRow = r; Object.assign(dayMap, temp); break; }
-                }
-            }
-            if (dayRow === -1) {
-                log('⚠️ 未找到星期行，使用默认列映射', 'warn');
-                const cols = Object.keys(grid[gridRows[0]]).map(Number).sort((a, b) => a - b);
-                cols.slice(1).forEach((c, i) => { if (i < 7) dayMap[c] = i + 1; });
-                dayRow = gridRows[0];
-            }
-            log(`📅 星期行=row${dayRow}; ${JSON.stringify(dayMap)}`, 'ok');
-
-            const dataRows = gridRows.filter(r => r > dayRow);
-
-            // ── B: 找节次列（扫全部列）─────────────────────
-            let periodCol = -1, periodScore = 0;
-            for (let tryC = 0; tryC <= maxCol; tryC++) {
-                let sc = 0;
-                for (const r of dataRows) {
-                    const cell = grid[r]?.[tryC];
-                    if (!cell || !cell.origin) continue;
-                    const t = cell.text || '';
-                    if (/第\s*\d+\s*节/.test(t) || /\d{1,2}:\d{2}/.test(t)) sc++;
-                }
-                if (sc > periodScore) { periodScore = sc; periodCol = tryC; }
-            }
-            if (periodCol === -1) periodCol = 0;
-            log(`🕐 节次列=col${periodCol}(${periodScore}命中)`, 'ok');
-
-            // ── C: 行→节次映射（多列尝试）─────────────────
-            const rowPeriodMap = {};
-            let lastPeriod = 1;
-            const tryCols = [periodCol, periodCol + 1, periodCol - 1].filter(x => x >= 0 && x <= maxCol);
-            for (const r of dataRows) {
-                let updated = false;
-                for (const tryC of tryCols) {
-                    const cell = grid[r]?.[tryC];
-                    if (!cell || !cell.origin) continue;
-                    const t = (cell.text || '').replace(/\u00a0/g, ' ');
-                    const m1 = t.match(/第\s*(\d{1,2})\s*节/);
-                    const m2 = !m1 && t.match(/^(\d{1,2})(?:\n|\r|$)/m);
-                    if (m1) { lastPeriod = parseInt(m1[1]); updated = true; break; }
-                    if (m2) { const n = parseInt(m2[1]); if (n >= 1 && n <= 13) { lastPeriod = n; updated = true; break; } }
-                }
-                rowPeriodMap[r] = lastPeriod;
-            }
-            const sample = Object.fromEntries(dataRows.slice(0, 12).map(r => [r, rowPeriodMap[r]]));
-            log(`🗓️ 节次样本: ${JSON.stringify(sample)}`, 'ok');
-
-            // ── D: 遍历数据格 ────────────────────────────
-            const dayCols = Object.keys(dayMap).map(Number).sort((a, b) => a - b);
-            for (const r of dataRows) {
-                const startPeriod = rowPeriodMap[r] || 1;
-                for (const c of dayCols) {
-                    const cell = grid[r]?.[c];
-                    if (!cell || !cell.origin) continue;
-                    const text = (cell.text || '').trim();
-                    if (!text || text.length < 2) continue;
-
-                    const day = dayMap[c];
-                    const rs = cell.rowspan || 1;
-
-                    // 计算 endPeriod：rs=1 时等于 startPeriod；rs>1 时取所跨行中最大节次
-                    let endPeriod = startPeriod;
-                    if (rs > 1) {
-                        for (const rr of dataRows) {
-                            if (rr >= r && rr < r + rs) {        // ← 用 r+rs，不是 r+rs*2
-                                const p = rowPeriodMap[rr];
-                                if (p !== undefined && p > endPeriod) endPeriod = p;
-                            }
-                        }
-                        if (endPeriod === startPeriod) endPeriod = startPeriod + rs - 1;
-                    }
-                    endPeriod = Math.min(Math.max(endPeriod, startPeriod), 13);
-
-                    const found = extractCoursesFromCell(text, day, startPeriod, endPeriod, totalWeeks);
-                    result.push(...found);
-                }
-            }
-            log(`✅ 共解析 ${result.length} 条课程`, 'ok');
-            return result;
-        }
-
-        // ══════════════════════════════════════════════
-        //  ROOM & WEEK DETECTION
-        // ══════════════════════════════════════════════
-        const ROOM_PATTERNS = [
-            /教[东西南北中主][A-Za-z\u4e00-\u9fa5][\w\-]*/,
-            /[A-Z]\d{1,2}[-\s]\d{3,}/,
-            /[一二三四五六七八九十](教|号楼)\S+/,
-            /实验楼[\d\S]*/,
-            /实验大楼[\d\S]*/,
-            /启翔楼[\d\S]*/,
-            /\d+号楼\S*/,
-            /[图体]\w{0,4}馆/,
-            /游泳馆/,
-            /翱翔体育馆/,
-            /\S*体育馆/,
-            /体育场|游泳池|操场|运动场/,
-            /\S*楼\d[-\d]*/,
-        ];
-
-        function hasWeekInfo(t) {
-            return /\d+\s*[-~～至]\s*\d+\s*周|\d+\s*周|[单双]周|\[\d/.test(t);
-        }
-
-        // ══════════════════════════════════════════════
-        //  CELL-LEVEL PARSING
-        // ══════════════════════════════════════════════
-        function extractCoursesFromCell(text, day, startPeriod, endPeriod, totalWeeks) {
-            // 先按双换行分块（不同课程之间通常有空行）
-            const blocks = text.split(/\n{2,}/).map(b => b.trim()).filter(b => b.length >= 2);
-
-            if (blocks.length > 1) {
-                // 多个块 → 当作多门课程分别解析
-                const result = [];
-                for (const block of blocks) {
-                    const courses = parseMultiEntryBlock(block, day, startPeriod, endPeriod, totalWeeks);
-                    result.push(...courses);
-                }
-                return result;
-            }
-
-            // 单块 → 可能包含同一时段不同周次的多门课程
-            return parseMultiEntryBlock(text, day, startPeriod, endPeriod, totalWeeks);
-        }
-
-        /**
-         * 解析一个文本块，它可能包含多门课程（不同周次不同教师的子条目）。
-         * 典型格式：
-         *   课程名 编号
-         *   (周次1) (节次) 教室 教师
-         *   (周次2) (节次) 教室 教师
-         *   备注行
-         *
-         *   课程名2 编号
-         *   (周次) (节次) 教室 教师
-         */
-        function parseMultiEntryBlock(text, day, startPeriod, endPeriod, totalWeeks) {
-            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-            if (!lines.length) return [];
-
-            const allRoomPatterns = getCustomRoomPatterns();
-            const isRoomFn = t => allRoomPatterns.some(re => re.test(t));
-            const sectionLabel = t => /^(上午|下午|晚上|午间|中午)$/.test(t);
-
-            // 检测"条目行"：包含(周次)信息的行，如 "(1~8周) (1-2节) 教西D-104 朱项项"
-            const ENTRY_RE = /[\(（]\s*\d+.*?周\s*[\)）]/;
-            const isEntryLine = l => ENTRY_RE.test(l);
-
-            // 按课程名分组：课程名行后面跟着若干条目行
-            const courseGroups = [];
-            let currentGroup = null;
-
-            // 辅助函数：清理课程名（移除编号后缀）
-            const cleanCourseName = name => name.replace(/\s+\d{1,2}$/, '').trim();
-
-            for (const line of lines) {
-                if (sectionLabel(line)) continue;
-
-                // 是否是一个新课程名行？
-                // 课程名行的特征：不含周次信息、不是纯教室、不太短、不是备注描述
-                const isEntry = isEntryLine(line);
-                const isWeekLine = hasWeekInfo(line);
-                const isRoomLine = isRoomFn(line) && !isWeekLine;
-                // 描述/备注行：院系年级信息，不是课程名
-                // 匹配：^\d+院、级.*(必修|选修|课堂)、^20XX级/本科、以数字开头且含关键词
-                // 或单独的关键词行：全校、公共课、学位课、社会实践等
-                const isDescLine = /^\d+院|级.*(必修|选修|课堂)|^20\d{2}[\s级年]/.test(line)
-                    || (/^\d/.test(line) && /本科|专科|研究生|全校|公共课/.test(line))
-                    || /^(全校|公共课|学位课|社会实践|集中|实践|全校本科生)$/.test(line);
-
-                if (!isEntry && !isWeekLine && !isRoomLine && !isDescLine
-                    && line.length >= 2 && /[\u4e00-\u9fa5a-zA-Z]/.test(line)
-                    && !/^[\d:\-~\s\/]+$/.test(line)) {
-                    // 看起来像课程名 → 检查是否与前一个课程名重复
-                    const cleanedLine = cleanCourseName(line);
-                    const isDuplicate = currentGroup && cleanCourseName(currentGroup.name) === cleanedLine;
-
-                    if (!isDuplicate) {
-                        // 不重复 → 开新组
-                        currentGroup = { name: line, entries: [] };
-                        courseGroups.push(currentGroup);
-                    } else {
-                        // 重复 → 作为备注行添加到当前组
-                        if (currentGroup) currentGroup.entries.push(line);
-                    }
-                } else if (currentGroup) {
-                    currentGroup.entries.push(line);
-                } else {
-                    // 还没有课程名，先存到一个匿名组
-                    currentGroup = { name: '', entries: [line] };
-                    courseGroups.push(currentGroup);
-                }
-            }
-
-            if (courseGroups.length === 0) return [];
-
-            const result = [];
-            for (const group of courseGroups) {
-                const parsed = parseCourseGroup(group, day, startPeriod, endPeriod, totalWeeks, allRoomPatterns);
-                result.push(...parsed);
-            }
-            return result;
-        }
-
-        /**
-         * 解析单个课程组 (一个课程名 + 若干条目行)。
-         * 如果条目行包含不同周次，可能返回多条课程记录（共享名字和节次）。
-         */
-        function parseCourseGroup(group, day, startPeriod, endPeriod, totalWeeks, allRoomPatterns) {
-            let name = group.name;
-            const entryLines = group.entries;
-
-            // 清理课程名（移除编号后缀 " 01"、" 02"）
-            let cleanName = name.replace(/\s+\d{1,2}$/, '').trim();
-            if (!cleanName) cleanName = name;
-
-            const isRoomFn = t => allRoomPatterns.some(re => re.test(t));
-
-            // 检测条目行：有 (N周) 或 (N~M周) 的行
-            const ENTRY_RE = /[\(（]\s*(\d+(?:\s*[~\-～至,，]\s*\d+)*(?:\s*[\(（][单双][\)）])?\s*周)\s*[\)）]/;
-
-            // 收集所有条目
-            const entries = [];
-            let fallbackRoom = '', fallbackTeacher = '';
-            let allWeeks = [];
-
-            for (const line of entryLines) {
-                const entryMatch = line.match(ENTRY_RE);
-                if (entryMatch) {
-                    // 这是一个条目行 → 提取周次、节次、教室、教师
-                    const weekStr = entryMatch[1]; // e.g. "1~8" or "11" or "1~3(单)"
-                    const weeks = parseWeekString('(' + weekStr + '周)', totalWeeks);
-
-                    // 提取节次
-                    let pStart = startPeriod, pEnd = endPeriod;
-                    const periodMatch = line.match(/[\(（]\s*(\d+)\s*[-~]\s*(\d+)\s*节\s*[\)）]/);
-                    if (periodMatch) {
-                        pStart = parseInt(periodMatch[1]);
-                        pEnd = parseInt(periodMatch[2]);
-                    }
-
-                    // 提取教室
-                    let room = '';
-                    for (const rp of allRoomPatterns) {
-                        const m = line.match(rp);
-                        if (m) { room = m[0]; break; }
-                    }
-
-                    // 提取教师（教室之后的2-4字中文名）
-                    let teacher = '';
-                    if (room) {
-                        const afterRoom = line.substring(line.indexOf(room) + room.length).trim();
-                        const tm = afterRoom.match(/^[\s]*([\u4e00-\u9fa5]{2,4})\b/);
-                        if (tm) teacher = tm[1];
-                    }
-                    if (!teacher) {
-                        // 行末尾的中文名
-                        const tm = line.match(/\s([\u4e00-\u9fa5]{2,4})\s*$/);
-                        if (tm) teacher = tm[1];
-                    }
-
-                    if (!fallbackRoom && room) fallbackRoom = room;
-                    if (!fallbackTeacher && teacher) fallbackTeacher = teacher;
-
-                    entries.push({ weeks, startPeriod: pStart, endPeriod: pEnd, room, teacher });
-                } else if (hasWeekInfo(line)) {
-                    // 非标准格式的周次行
-                    const pw = parseWeekString(line, totalWeeks);
-                    allWeeks.push(...pw);
-                } else if (isRoomFn(line) && !fallbackRoom) {
-                    fallbackRoom = line;
-                }
-            }
-
-            // 如果没有找到任何条目行，尝试从课程名中提取信息
-            if (entries.length === 0) {
-                // 检查课程名本身是否包含周次
-                if (hasWeekInfo(name)) {
-                    allWeeks.push(...parseWeekString(name, totalWeeks));
-                    cleanName = cleanName.replace(/[\(（].*?周.*?[\)）]/g, '').replace(/\s+\d{1,2}$/, '').trim();
-                }
-                // 从课程名中提取教室
-                if (!fallbackRoom) {
-                    for (const rp of allRoomPatterns) {
-                        const m = cleanName.match(rp);
-                        if (m) { fallbackRoom = m[0]; cleanName = cleanName.replace(m[0], '').trim(); break; }
-                    }
-                }
-                // 移除清理后多余标点
-                cleanName = cleanName.replace(/[()（）\[\]【】]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-
-                if (!allWeeks.length) allWeeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
-                allWeeks = [...new Set(allWeeks)].sort((a, b) => a - b);
-
-                endPeriod = Math.min(Math.max(endPeriod, startPeriod), 13);
-                return [{ name: cleanName || name, room: fallbackRoom, teacher: fallbackTeacher, day, startPeriod, endPeriod, weeks: allWeeks }];
-            }
-
-            // 有条目行 → 按条目生成课程
-            // 如果所有条目的节次相同，合并周次为一门课
-            // 如果节次/教室不同，分开生成
-            const byKey = {};
-            for (const e of entries) {
-                const key = `${e.startPeriod}-${e.endPeriod}`;
-                if (!byKey[key]) byKey[key] = { startPeriod: e.startPeriod, endPeriod: e.endPeriod, weeks: [], room: e.room || fallbackRoom, teacher: e.teacher || fallbackTeacher };
-                byKey[key].weeks.push(...e.weeks);
-                if (e.room && !byKey[key].room) byKey[key].room = e.room;
-                if (e.teacher) byKey[key].teacher = e.teacher; // 取最后一个教师，或可扩展
-            }
-
-            cleanName = cleanName.replace(/[\(（].*?周.*?[\)）]/g, '').replace(/[\(（]\d+[-~]\d+节[\)）]/g, '').trim();
-            cleanName = cleanName.replace(/[()（）\[\]【】]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-            if (!cleanName) cleanName = name;
-
-            const result = [];
-            for (const [, val] of Object.entries(byKey)) {
-                val.weeks = [...new Set(val.weeks)].sort((a, b) => a - b);
-                val.endPeriod = Math.min(Math.max(val.endPeriod, val.startPeriod), 13);
-                result.push({
-                    name: cleanName,
-                    room: val.room,
-                    teacher: val.teacher,
-                    day,
-                    startPeriod: val.startPeriod,
-                    endPeriod: val.endPeriod,
-                    weeks: val.weeks
-                });
-            }
-            return result;
-        }
-
-        function getCustomRoomPatterns() {
-            const custom = (document.getElementById('custom-rooms')?.value || '').trim();
-            const extra = [];
-            if (custom) {
-                custom.split(/[,，\n]+/).map(s => s.trim()).filter(Boolean).forEach(s => {
-                    try { extra.push(new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))); } catch (e) { }
-                });
-            }
-            return [...ROOM_PATTERNS, ...extra];
-        }
-
-        // ══════════════════════════════════════════════
-        //  WEEK STRING PARSER
-        // ══════════════════════════════════════════════
-        function parseWeekString(str, total) {
-            const weeks = new Set();
-            if (!str) return [];
-
-            // 处理范围单双周格式：(1~3(单)周) 或 [1-8(双)周]
-            const oddEvenRangeRe = /[\[\(（](\d{1,2})[~\-～至]\s*(\d{1,2})\s*[\(（]([单双])[\)）]\s*周[\]\)）]/g;
-            let m;
-            while ((m = oddEvenRangeRe.exec(str)) !== null) {
-                const start = parseInt(m[1]);
-                const end = parseInt(m[2]);
-                const type = m[3];
-                for (let i = start; i <= Math.min(end, total); i++) {
-                    if ((type === '单' && i % 2 === 1) || (type === '双' && i % 2 === 0)) {
-                        weeks.add(i);
-                    }
-                }
-            }
-
-            // 全部单周/双周
-            if (/单周/.test(str) && weeks.size === 0) {
-                for (let i = 1; i <= total; i++) if (i % 2 === 1) weeks.add(i);
-                return [...weeks].sort((a, b) => a - b);
-            }
-            if (/双周/.test(str) && weeks.size === 0) {
-                for (let i = 1; i <= total; i++) if (i % 2 === 0) weeks.add(i);
-                return [...weeks].sort((a, b) => a - b);
-            }
-
-            // "N-M周" / "第N-M周"
-            const rangeRe = /第?\s*(\d{1,2})\s*[-~～至]\s*(\d{1,2})\s*周/g;
-            while ((m = rangeRe.exec(str)) !== null) {
-                for (let i = Math.min(+m[1], +m[2]); i <= Math.min(Math.max(+m[1], +m[2]), total); i++) weeks.add(i);
-            }
-
-            // 括号内范围 [1-16] / (1-16)
-            const bracketRe = /[\[\（\(](\d{1,2})\s*[-~～至]\s*(\d{1,2})[\]\）\)]/g;
-            while ((m = bracketRe.exec(str)) !== null) {
-                for (let i = Math.min(+m[1], +m[2]); i <= Math.min(Math.max(+m[1], +m[2]), total); i++) weeks.add(i);
-            }
-
-            // 单个"第X周" 或 "(X周)"
-            const singleRe = /第?\s*(\d{1,2})\s*周/g;
-            while ((m = singleRe.exec(str)) !== null) {
-                const w = parseInt(m[1]); if (w >= 1 && w <= total) weeks.add(w);
-            }
-
-            // 括号内单个数字 (11) — 可能是周次
-            const bracketSingleRe = /[\[\(（](\d{1,2})[\]\)）]/g;
-            while ((m = bracketSingleRe.exec(str)) !== null) {
-                // 仅在上下文含"周"时使用
-                if (/周/.test(str)) {
-                    const w = parseInt(m[1]); if (w >= 1 && w <= total) weeks.add(w);
-                }
-            }
-
-            // 兜底：提取数字组合
-            if (weeks.size === 0) {
-                const clean = str.replace(/[^0-9\-,，、\s]/g, '').trim();
-                if (clean) {
-                    clean.split(/[,，、\s]+/).forEach(p => {
-                        p = p.trim();
-                        const r2 = p.match(/^(\d+)[-](\d+)$/);
-                        if (r2) { for (let i = +r2[1]; i <= Math.min(+r2[2], total); i++) weeks.add(i); }
-                        else if (/^\d+$/.test(p)) { const w = +p; if (w >= 1 && w <= total) weeks.add(w); }
-                    });
-                }
-            }
-
-            return [...weeks].sort((a, b) => a - b);
-        }
-        //  COURSE MANAGEMENT
-        // ══════════════════════════════════════════════
-        let nextId = 1;
-        function addCourse(c) {
-            courses.push({ id: nextId++, ...c });
-        }
-
-        function removeCourse(id) {
-            courses = courses.filter(c => c.id !== id);
-            renderPreview();
-        }
-
-        // ══════════════════════════════════════════════
-        //  RENDER PREVIEW
-        // ══════════════════════════════════════════════
-        function getTimePeriodLabel(n) {
-            const p = PERIODS[n - 1];
-            return p ? `${p.start}` : '';
-        }
-
-        function renderPreview() {
-            document.getElementById('preview-section').style.display = 'block';
-            activateStep(3);
-
-            // Stats
-            const sb = document.getElementById('stat-bar');
-            sb.innerHTML = `
-    <div class="stat-item"><div class="val">${courses.length}</div><div class="lbl">课程条数</div></div>
-    <div class="stat-item"><div class="val">${new Set(courses.map(c => c.name)).size}</div><div class="lbl">不同科目</div></div>
-    <div class="stat-item"><div class="val">${calculateTotalSessions()}</div><div class="lbl">总课次</div></div>
-  `;
-
-            // Build timetable
-            const table = document.getElementById('timetable');
-            let html = '<thead><tr><th class="time-col">节次</th>';
-            DAYS.forEach(d => html += `<th>${d}</th>`);
-            html += '</tr></thead><tbody>';
-
-            PERIODS.forEach(p => {
-                html += `<tr>`;
-                html += `<td class="time-cell">第${p.n}节<br><span style="font-weight:400">${p.start}</span></td>`;
-                for (let d = 1; d <= 7; d++) {
-                    html += `<td>`;
-                    const matching = courses.filter(c => c.day === d && c.startPeriod <= p.n && c.endPeriod >= p.n);
-                    matching.forEach(c => {
-                        const weeksStr = formatWeeks(c.weeks);
-                        html += `<div class="course-chip" onclick="editCourse(${c.id})">
-          <span class="chip-del" onclick="event.stopPropagation();removeCourse(${c.id})">✕</span>
-          <div class="chip-name">${escHtml(c.name)}</div>
-          ${c.room ? `<div class="chip-room">📍${escHtml(c.room)}</div>` : ''}
-          <div class="chip-weeks">${weeksStr}</div>
-        </div>`;
-                    });
-                    if (matching.length === 0) {
-                        html += `<button class="add-course-btn" onclick="quickAdd(${d},${p.n})">+</button>`;
-                    }
-                    html += `</td>`;
-                }
-                html += `</tr>`;
-            });
-
-            html += '</tbody>';
-            table.innerHTML = html;
-        }
-
-        function calculateTotalSessions() {
-            return courses.reduce((s, c) => s + c.weeks.length, 0);
-        }
-
-        function formatWeeks(weeks) {
-            if (!weeks || weeks.length === 0) return '';
-            const sorted = [...weeks].sort((a, b) => a - b);
-            const ranges = [];
-            let start = sorted[0], end = sorted[0];
-            for (let i = 1; i < sorted.length; i++) {
-                if (sorted[i] === end + 1) { end = sorted[i]; }
-                else { ranges.push(start === end ? `${start}` : `${start}-${end}`); start = end = sorted[i]; }
-            }
-            ranges.push(start === end ? `${start}` : `${start}-${end}`);
-            return ranges.join(',') + '周';
-        }
-
-        function escHtml(s) {
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        function quickAdd(day, period) {
-            showManualAdd(null, day, period);
-        }
-
-        // ══════════════════════════════════════════════
-        //  MODAL
-        // ══════════════════════════════════════════════
-        function showManualAdd(course = null, defDay = 1, defPeriod = 1) {
-            editingId = course ? course.id : null;
-            document.getElementById('modal-title').textContent = course ? '编辑课程' : '添加课程';
-            document.getElementById('m-name').value = course?.name || '';
-            document.getElementById('m-room').value = course?.room || '';
-            document.getElementById('m-teacher').value = course?.teacher || '';
-            document.getElementById('m-day').value = String(course?.day || defDay);
-            document.getElementById('m-start-period').value = String(course?.startPeriod || defPeriod);
-            document.getElementById('m-end-period').value = String(course?.endPeriod || (defPeriod + 1 <= 13 ? defPeriod + 1 : defPeriod));
-
-            const total = parseInt(document.getElementById('total-weeks').value) || 18;
-            if (course?.weeks) {
-                weekSelState = Array(total).fill(false);
-                course.weeks.forEach(w => { if (w <= total) weekSelState[w - 1] = true; });
-            } else {
-                weekSelState = Array(total).fill(true);
-            }
-            document.getElementById('m-weeks-text').value = '';
-            renderWeekChips();
-            document.getElementById('modal-overlay').classList.add('show');
-            setTimeout(() => document.getElementById('m-name').focus(), 100);
-        }
-
-        function editCourse(id) {
-            const c = courses.find(x => x.id === id);
-            if (c) showManualAdd(c);
-        }
-
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.remove('show');
-            editingId = null;
-        }
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeModal();
-        });
-        document.getElementById('modal-overlay').addEventListener('click', e => {
-            if (e.target === document.getElementById('modal-overlay')) closeModal();
-        });
-
-        function submitCourse() {
-            const name = document.getElementById('m-name').value.trim();
-            if (!name) { showToast('⚠️ 请输入课程名称'); return; }
-
-            const data = {
-                name,
-                room: document.getElementById('m-room').value.trim(),
-                teacher: document.getElementById('m-teacher').value.trim(),
-                day: parseInt(document.getElementById('m-day').value),
-                startPeriod: parseInt(document.getElementById('m-start-period').value),
-                endPeriod: parseInt(document.getElementById('m-end-period').value),
-                weeks: weekSelState.map((on, i) => on ? i + 1 : null).filter(Boolean),
-            };
-
-            if (data.endPeriod < data.startPeriod) data.endPeriod = data.startPeriod;
-            if (data.weeks.length === 0) { showToast('⚠️ 请至少选择一个周次'); return; }
-
-            if (editingId !== null) {
-                const idx = courses.findIndex(c => c.id === editingId);
-                if (idx !== -1) courses[idx] = { id: editingId, ...data };
-            } else {
-                addCourse(data);
-            }
-
-            closeModal();
-            renderPreview();
-
-            // ══════════════════════════════════════════════
-            activateStep(3);
-            showToast(editingId !== null ? '✅ 课程已更新' : '✅ 课程已添加');
-        }
-
-        // ══════════════════════════════════════════════
-        //  ICS GENERATION
-        // ══════════════════════════════════════════════
-        function generateICS() {
-            if (courses.length === 0) { showToast('⚠️ 暂无课程数据'); return; }
-
-            const startDateStr = document.getElementById('start-date').value;
-            const startWeekNum = parseInt(document.getElementById('start-week').value) || 1;
-            const semName = document.getElementById('semester-name').value || '';
-
-            if (!startDateStr) { showToast('⚠️ 请设置第一周周一日期'); return; }
-
-            const semesterStart = new Date(startDateStr + 'T00:00:00');
-            // semesterStart is semester week 1 Monday
-            // startWeekNum is the starting week number in schedule table (e.g., if schedule starts at week 2, set to 2)
-
-            let icsLines = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                `PRODID:-//Course Schedule ICS Generator//CN`,
-                'CALSCALE:GREGORIAN',
-                'METHOD:PUBLISH',
-                `X-WR-CALNAME:${semName}课程表`,
-                'X-WR-TIMEZONE:Asia/Shanghai',
-                'BEGIN:VTIMEZONE',
-                'TZID:Asia/Shanghai',
-                'BEGIN:STANDARD',
-                'DTSTART:19700101T000000',
-                'TZOFFSETFROM:+0800',
-                'TZOFFSETTO:+0800',
-                'TZNAME:CST',
-                'END:STANDARD',
-                'END:VTIMEZONE',
-            ];
-
-            const now = formatDT(new Date());
-
-            courses.forEach(course => {
-                const p_start = PERIODS[course.startPeriod - 1];
-                const p_end = PERIODS[course.endPeriod - 1] || PERIODS[course.startPeriod - 1];
-                if (!p_start || !p_end) return;
-
-                // Group consecutive weeks into RRULE or individual events
-                // For simplicity generate individual events per session when weeks are non-consecutive
-                // For consecutive range use RRULE with EXDATE
-                // Actually generating individual VEVENT per occurrence is most reliable for iOS
-                // SUMMARY格式：课程名 教室（教室在标题中显示，不使用LOCATION字段）
-                const summary = course.room ? `${course.name} ${course.room}` : course.name;
-                const desc = [
-                    course.teacher ? `教师：${course.teacher}` : '',
-                    `周次：${formatWeeks(course.weeks)}`,
-                    `节次：第${course.startPeriod}-${course.endPeriod}节`,
-                ].filter(Boolean).join('\\n');
-
-                // Day offset: day=1(Mon)=0 offset, day=7(Sun)=6 offset
-                const dayOffset = course.day - 1; // 0=Mon
-
-                course.weeks.forEach(w => {
-                    // Compute actual date for this week's occurrence
-                    // Schedule week w maps to semester week (w - startWeekNum + 1)
-                    // So offset from semesterStart (week 1 Monday) is (w - startWeekNum) weeks
-                    const weekOffset = (w - startWeekNum) * 7;
-                    const date = new Date(semesterStart);
-                    date.setDate(date.getDate() + weekOffset + dayOffset);
-
-                    const [sh, sm] = p_start.start.split(':').map(Number);
-                    const [eh, em] = p_end.end.split(':').map(Number);
-
-                    const dtStart = formatDTLocal(date, sh, sm);
-                    const dtEnd = formatDTLocal(date, eh, em);
-
-                    const uid = `course-${course.id}-w${w}@schedule`;
-
-                    const evt = [
-                        'BEGIN:VEVENT',
-                        `UID:${uid}`,
-                        `DTSTAMP:${now}`,
-                        `DTSTART;TZID=Asia/Shanghai:${dtStart}`,
-                        `DTEND;TZID=Asia/Shanghai:${dtEnd}`,
-                        `SUMMARY:${escICS(summary)}`,
-                        `DESCRIPTION:${escICS(desc)}`,
-                        'END:VEVENT',
-                    ].filter(Boolean);
-                    icsLines.push(...evt);
-                });
-            });
-
-            // Remove empty lines from push
-            icsLines = icsLines.filter(l => l !== '');
-            icsLines.push('END:VCALENDAR');
-
-            const content = icsLines.join('\r\n');
-            const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${semName || '课程表'}.ics`;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            showToast(`🎉 已生成 ${courses.length} 门课程的 ICS 文件！`);
-            activateStep(4);
-        }
-
-        function formatDT(d) {
-            const pad = n => String(n).padStart(2, '0');
-            return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
-        }
-
-        function formatDTLocal(date, h, m) {
-            const pad = n => String(n).padStart(2, '0');
-            const y = date.getFullYear();
-            const mo = date.getMonth() + 1;
-            const d = date.getDate();
-            return `${y}${pad(mo)}${pad(d)}T${pad(h)}${pad(m)}00`;
-        }
-
-        function escICS(str) {
-            return String(str).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
-        }
-
-        // ══════════════════════════════════════════════
-        //  STEP INDICATOR
-        // ══════════════════════════════════════════════
-        function activateStep(n) {
-            for (let i = 1; i <= 4; i++) {
-                const el = document.getElementById(`step${i}-badge`);
-                if (el) el.classList.toggle('active', i <= n);
-            }
-        }
-
-        // ══════════════════════════════════════════════
-        //  TOAST
-        // ══════════════════════════════════════════════
-        let toastTimer;
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
-        }
-    </script>
+            <div>
+                <span class="strip-number">02</span>
+                <p><strong>换教师不再被覆盖</strong><small>相同节次下，不同教师与教室分别生成独立排课段。</small></p>
+            </div>
+            <div>
+                <span class="strip-number">03</span>
+                <p><strong>导出前主动体检</strong><small>检查缺失字段、异常命名、重复课次与时间冲突。</small></p>
+            </div>
+        </section>
+    </main>
+
+    <dialog class="course-dialog" id="course-dialog" aria-labelledby="dialog-title">
+        <form id="course-form">
+            <div class="dialog-handle" aria-hidden="true"></div>
+            <div class="dialog-heading">
+                <div><span class="panel-kicker">课程详情</span><h2 id="dialog-title">编辑课程</h2></div>
+                <button class="icon-button dialog-close" id="dialog-close" type="button" aria-label="关闭">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>
+                </button>
+            </div>
+            <div class="dialog-fields">
+                <label class="field field-wide"><span>课程名称 <b>*</b></span><input id="course-name" name="name" required maxlength="80" placeholder="例如：大学英语核心能力"></label>
+                <label class="field"><span>教室</span><input id="course-room" name="room" maxlength="60" placeholder="例如：教西 B1-302"></label>
+                <label class="field"><span>教师</span><input id="course-teacher" name="teacher" maxlength="40" placeholder="选填"></label>
+                <label class="field"><span>星期</span><select id="course-day" name="day"></select></label>
+                <div class="period-fields">
+                    <label class="field"><span>开始节次</span><select id="course-start-period" name="startPeriod"></select></label>
+                    <label class="field"><span>结束节次</span><select id="course-end-period" name="endPeriod"></select></label>
+                </div>
+                <label class="field field-wide"><span>上课周次 <b>*</b><small>支持 1-16、1,3,5-8、单周、双周</small></span><input id="course-weeks-input" type="text" placeholder="例如：1-8, 10-17"></label>
+                <div class="week-shortcuts field-wide" aria-label="周次快捷选择">
+                    <button type="button" data-week-action="all">全选</button>
+                    <button type="button" data-week-action="odd">单周</button>
+                    <button type="button" data-week-action="even">双周</button>
+                    <button type="button" data-week-action="clear">清空</button>
+                </div>
+                <div class="week-picker field-wide" id="week-picker"></div>
+            </div>
+            <div class="dialog-actions">
+                <button class="button button-danger" id="delete-course" type="button">删除</button>
+                <span></span>
+                <button class="button button-secondary" id="cancel-course" type="button">取消</button>
+                <button class="button button-primary" type="submit">保存修改</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <noscript>需要启用 JavaScript 才能在本地识别课表并生成 ICS 文件。</noscript>
 </body>
 
 </html>
