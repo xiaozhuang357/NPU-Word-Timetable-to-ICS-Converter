@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { parseHTML } from 'linkedom';
 
 import {
@@ -35,7 +36,7 @@ test('兼容连续、离散及单双周输入', () => {
     assert.deepEqual(parseWeekString('第1、3、5周', 18), [1, 3, 5]);
 });
 
-test('同一课程换教师时保留独立排课段', () => {
+test('同一课程换教师时合并课程并保留分周教师', () => {
     const text = [
         '软件测试 02',
         '(11~14周) (1-2节) 启真楼204-2 郑炜',
@@ -49,10 +50,15 @@ test('同一课程换教师时保留独立排课段', () => {
         endPeriod: 2,
         totalWeeks: 18,
     });
-    assert.equal(courses.length, 3);
-    assert.deepEqual(courses.map(course => course.teacher), ['郑炜', '高利鹏', '蔡文静']);
-    assert.deepEqual(courses.map(course => course.weeks), [[11, 12, 13, 14], [15, 16], [17, 18]]);
-    assert.ok(courses.every(course => course.name === '软件测试'));
+    assert.equal(courses.length, 1);
+    assert.equal(courses[0].name, '软件测试');
+    assert.equal(courses[0].teacher, '郑炜、高利鹏、蔡文静');
+    assert.deepEqual(courses[0].weeks, [11, 12, 13, 14, 15, 16, 17, 18]);
+    assert.deepEqual(courses[0].teacherSegments, [
+        { teacher: '郑炜', weeks: [11, 12, 13, 14] },
+        { teacher: '高利鹏', weeks: [15, 16] },
+        { teacher: '蔡文静', weeks: [17, 18] },
+    ]);
 });
 
 test('从含合并单元格的西工大课表中识别星期与节次', () => {
@@ -71,7 +77,7 @@ test('从含合并单元格的西工大课表中识别星期与节次', () => {
         </table>
     `);
     const result = parseScheduleTable(document.querySelector('table'), { totalWeeks: 18 });
-    assert.equal(result.courses.length, 3);
+    assert.equal(result.courses.length, 2);
     const english = result.courses.find(course => course.name === '大学英语核心能力');
     assert.ok(english);
     assert.equal(english.day, 1);
@@ -79,6 +85,10 @@ test('从含合并单元格的西工大课表中识别星期与节次', () => {
     assert.equal(english.endPeriod, 2);
     assert.equal(english.room, '教西B1-302');
     assert.deepEqual(english.weeks, [10, 11, 12, 13, 14, 15, 16, 17]);
+    const testing = result.courses.find(course => course.name === '软件测试');
+    assert.ok(testing);
+    assert.equal(testing.teacher, '郑炜、高利鹏');
+    assert.deepEqual(testing.weeks, [11, 12, 13, 14, 15, 16]);
 });
 
 test('质量检查会发现时间冲突和周次黏连', () => {
@@ -97,7 +107,11 @@ test('ICS 使用长安校区第 13 节时间并生成独立事件', () => {
         courses: [{
             name: '互联网系统综合项目实践',
             room: '教西B1-203',
-            teacher: '金强国',
+            teacher: '金强国、陈老师',
+            teacherSegments: [
+                { teacher: '金强国', weeks: [1] },
+                { teacher: '陈老师', weeks: [2] },
+            ],
             day: 1,
             startPeriod: 11,
             endPeriod: 13,
@@ -115,7 +129,28 @@ test('ICS 使用长安校区第 13 节时间并生成独立事件', () => {
     assert.match(result.content, /DTEND;TZID=Asia\/Shanghai:20260831T212500/);
     assert.match(result.content, /DTSTART;TZID=Asia\/Shanghai:20260907T190000/);
     assert.match(result.content, /LOCATION:教西B1-203/);
+    assert.match(result.content, /教师：金强国/);
+    assert.match(result.content, /教师：陈老师/);
     result.content.split('\r\n').forEach(line => {
         assert.ok(Buffer.byteLength(line, 'utf8') <= 75, `ICS 行超过 75 字节：${line}`);
     });
+});
+
+test('同槽课程纵向分栏且课表尺寸由内容驱动', () => {
+    const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+    const scheduleGridRule = css.match(/\.schedule-grid\s*\{([^}]+)\}/)?.[1] || '';
+    const courseStackRule = css.match(/\.course-stack\s*\{([^}]+)\}/)?.[1] || '';
+    assert.match(scheduleGridRule, /inline-size:\s*max-content\s*;/);
+    assert.match(scheduleGridRule, /repeat\(var\(--period-count/);
+    assert.doesNotMatch(scheduleGridRule, /min-(?:width|height):\s*(?:1080|802)px/);
+    assert.match(courseStackRule, /display:\s*grid\s*;/);
+    assert.match(courseStackRule, /grid-template-columns:\s*repeat\(var\(--course-count/);
+});
+
+test('功能界面不包含营销首屏与纯装饰区块', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    assert.doesNotMatch(html, /class="hero(?:\s|"|')/);
+    assert.doesNotMatch(html, /class="ambient(?:\s|"|')/);
+    assert.doesNotMatch(html, /confidence-strip/);
+    assert.ok(html.indexOf('class="flow-nav"') < html.indexOf('class="workspace-grid"'));
 });

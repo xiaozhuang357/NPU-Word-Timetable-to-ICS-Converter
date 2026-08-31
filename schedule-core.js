@@ -275,30 +275,65 @@ function parseLineMetadata(value, context) {
     return { source, weeks, ...period, room, teacher, metadataLikely };
 }
 
-function mergeCourseRecords(records) {
+function teacherSegmentsForRecord(record) {
+    if (Array.isArray(record.teacherSegments) && record.teacherSegments.length) {
+        return record.teacherSegments;
+    }
+    return record.teacher ? [{ teacher: record.teacher, weeks: record.weeks || [] }] : [];
+}
+
+function mergeTeacherSegments(segments) {
+    const merged = new Map();
+    segments.forEach(segment => {
+        const teacher = normalizeText(segment.teacher);
+        if (!teacher) return;
+        const weeks = merged.get(teacher) || [];
+        merged.set(teacher, [...new Set([...weeks, ...(segment.weeks || [])])]);
+    });
+    return [...merged.entries()]
+        .map(([teacher, weeks]) => ({ teacher, weeks: weeks.sort((a, b) => a - b) }))
+        .sort((left, right) => (
+            (left.weeks[0] ?? Number.MAX_SAFE_INTEGER) - (right.weeks[0] ?? Number.MAX_SAFE_INTEGER)
+            || left.teacher.localeCompare(right.teacher, 'zh-CN')
+        ));
+}
+
+export function consolidateCourseRecords(records) {
     const merged = new Map();
     records.forEach(record => {
         if (!record.name) return;
         const key = [
-            record.name,
+            normalizeText(record.name).replace(/\s+/g, '').toLowerCase(),
             record.day,
             record.startPeriod,
             record.endPeriod,
-            record.room || '',
-            record.teacher || '',
+            normalizeText(record.room || '').replace(/\s+/g, '').toLowerCase(),
         ].join('\u001f');
         const current = merged.get(key);
         if (!current) {
-            merged.set(key, { ...record, weeks: [...new Set(record.weeks || [])] });
+            merged.set(key, {
+                ...record,
+                weeks: [...new Set(record.weeks || [])],
+                teacherSegments: mergeTeacherSegments(teacherSegmentsForRecord(record)),
+            });
             return;
         }
         current.weeks = [...new Set([...current.weeks, ...(record.weeks || [])])];
-        current.sourceText = `${current.sourceText || ''}\n${record.sourceText || ''}`.trim();
+        current.teacherSegments = mergeTeacherSegments([
+            ...(current.teacherSegments || []),
+            ...teacherSegmentsForRecord(record),
+        ]);
+        current.sourceText = [...new Set([current.sourceText, record.sourceText].filter(Boolean))].join('\n');
     });
-    return [...merged.values()].map(record => ({
-        ...record,
-        weeks: record.weeks.sort((a, b) => a - b),
-    }));
+    return [...merged.values()].map(record => {
+        const teacherSegments = mergeTeacherSegments(record.teacherSegments || []);
+        return {
+            ...record,
+            weeks: record.weeks.sort((a, b) => a - b),
+            teacherSegments,
+            teacher: teacherSegments.map(segment => segment.teacher).join('、'),
+        };
+    });
 }
 
 export function extractCoursesFromCell(value, options = {}) {
@@ -402,7 +437,7 @@ export function extractCoursesFromCell(value, options = {}) {
         });
     });
 
-    return mergeCourseRecords(records);
+    return consolidateCourseRecords(records);
 }
 
 function cellText(cell) {
@@ -560,7 +595,7 @@ export function parseScheduleTable(table, options = {}) {
         });
     });
 
-    const merged = mergeCourseRecords(courses);
+    const merged = consolidateCourseRecords(courses);
     return {
         courses: merged,
         warnings: periodScore <= 0 ? ['节次列识别置信度较低，请核对预览'] : [],
@@ -761,17 +796,22 @@ export function generateIcs(options) {
         const end = periods[course.endPeriod - 1] || start;
         if (!start || !end) return;
         (course.weeks || []).forEach(week => {
+            const weekTeachers = (course.teacherSegments || [])
+                .filter(segment => (segment.weeks || []).includes(week))
+                .map(segment => normalizeText(segment.teacher))
+                .filter(Boolean);
+            const teacher = [...new Set(weekTeachers)].join('、') || course.teacher || '';
             const date = addDays(anchorDate, (week - anchorWeek) * 7 + course.day - 1);
             const startTime = start.start.replace(':', '');
             const endTime = end.end.replace(':', '');
             const summary = course.room ? `${course.name} · ${course.room}` : course.name;
             const description = [
-                course.teacher ? `教师：${course.teacher}` : '',
+                teacher ? `教师：${teacher}` : '',
                 `周次：第${week}周（${formatWeeks(course.weeks)}）`,
                 `节次：第${course.startPeriod}-${course.endPeriod}节`,
                 '校区：长安校区',
             ].filter(Boolean).join('\n');
-            const identity = [course.name, course.room, course.teacher, course.day, course.startPeriod, course.endPeriod, week, date].join('|');
+            const identity = [course.name, course.room, teacher, course.day, course.startPeriod, course.endPeriod, week, date].join('|');
             lines.push(
                 'BEGIN:VEVENT',
                 `UID:${stableHash(identity)}-${date}@npu-calendar.local`,

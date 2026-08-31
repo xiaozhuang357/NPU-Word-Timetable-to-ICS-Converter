@@ -26,7 +26,7 @@
     },
     "scripts": {
         "dev": "vite --host 127.0.0.1 --port 8080",
-        "build": "vite build && node scripts/write-worker.mjs",
+        "build": "vite build",
         "preview": "vite preview --host 127.0.0.1 --port 8080",
         "test": "node --test",
         "check": "node --check app.js && node --check schedule-core.js && node --test"
@@ -35,7 +35,6 @@
         "mammoth": "^1.12.2"
     },
     "devDependencies": {
-        "@openai/sites-vite-plugin": "^0.2.0",
         "linkedom": "^0.18.12",
         "vite": "^8.2.2"
     },

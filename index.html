@@ -9,15 +9,9 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="翱翔课表 · NPU Calendar">
     <meta property="og:description" content="识别西工大长安校区 Word 课表，核对后生成适配主流日历应用的 ICS 文件。">
-    <meta property="og:url" content="https://npu-aoxiang-calendar.lisi-code-c.chatgpt.site/">
-    <meta property="og:image" content="https://npu-aoxiang-calendar.lisi-code-c.chatgpt.site/og.png">
-    <meta property="og:image:width" content="1742">
-    <meta property="og:image:height" content="909">
-    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="翱翔课表 · NPU Calendar">
     <meta name="twitter:description" content="识别西工大长安校区 Word 课表，核对后生成适配主流日历应用的 ICS 文件。">
-    <meta name="twitter:image" content="https://npu-aoxiang-calendar.lisi-code-c.chatgpt.site/og.png">
-    <link rel="canonical" href="https://npu-aoxiang-calendar.lisi-code-c.chatgpt.site/">
     <title>翱翔课表 · NPU Calendar</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./styles.css">
@@ -26,22 +20,14 @@
 </head>
 
 <body>
-    <div class="ambient ambient-one" aria-hidden="true"></div>
-    <div class="ambient ambient-two" aria-hidden="true"></div>
-
     <header class="topbar">
         <a class="brand" href="#top" aria-label="返回顶部">
-            <span class="brand-mark" aria-hidden="true"><span>N</span></span>
             <span class="brand-copy">
-                <strong>翱翔课表</strong>
-                <small>NPU Calendar</small>
+                <h1>翱翔课表</h1>
+                <small>课表转 ICS</small>
             </span>
         </a>
         <div class="topbar-actions">
-            <span class="privacy-pill">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
-                文件仅在本机处理
-            </span>
             <button class="icon-button" id="theme-toggle" type="button" aria-label="切换深浅色模式" title="切换深浅色模式">
                 <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
                 <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
@@ -50,34 +36,6 @@
     </header>
 
     <main class="app-shell" id="top">
-        <section class="hero" aria-labelledby="page-title">
-            <div class="hero-copy">
-                <span class="eyebrow"><span class="eyebrow-dot"></span>西北工业大学 · 长安校区专版</span>
-                <h1 id="page-title">一份课表，<br><span>准时落进日历。</span></h1>
-                <p>识别教务系统 Word 课表，自动拆分周次、教师与教室。导出前逐项校验，再生成适配 iPhone、Mac 和主流日历应用的 ICS 文件。</p>
-            </div>
-            <div class="hero-proof" aria-label="工具能力">
-                <div class="proof-item">
-                    <span class="proof-icon blue" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M4 5h16v15H4zM8 3v4M16 3v4M4 9h16"/></svg>
-                    </span>
-                    <div><strong>长安校区作息</strong><small>内置第 1–13 节官方时间</small></div>
-                </div>
-                <div class="proof-item">
-                    <span class="proof-icon violet" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="m12 3 2.4 4.9L20 9l-4 3.9.9 5.5L12 15.8 7.1 18.4 8 12.9 4 9l5.6-1.1L12 3Z"/></svg>
-                    </span>
-                    <div><strong>智能纠错</strong><small>拦截周次黏连与时间冲突</small></div>
-                </div>
-                <div class="proof-item">
-                    <span class="proof-icon green" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z"/></svg>
-                    </span>
-                    <div><strong>隐私优先</strong><small>不上传课表，不保存个人信息</small></div>
-                </div>
-            </div>
-        </section>
-
         <nav class="flow-nav" aria-label="生成步骤">
             <div class="flow-step is-active" data-step="1"><span>1</span><strong>导入</strong><small>选择课表</small></div>
             <i aria-hidden="true"></i>
@@ -92,10 +50,8 @@
             <article class="glass-panel upload-panel">
                 <div class="panel-heading">
                     <div>
-                        <span class="panel-kicker">第一步</span>
                         <h2>导入 Word 课表</h2>
                     </div>
-                    <span class="local-badge"><span></span>本地识别</span>
                 </div>
 
                 <label class="drop-zone" id="drop-zone" for="file-input">
@@ -105,7 +61,7 @@
                     </span>
                     <span class="drop-copy">
                         <strong id="drop-title">拖入课表，或点击选择</strong>
-                        <small id="drop-subtitle">支持教务系统导出的 .docx 文件</small>
+                        <small id="drop-subtitle">支持教务系统导出的 .docx 文件 · 仅在本机处理</small>
                     </span>
                     <span class="select-file">选择文件</span>
                 </label>
@@ -142,10 +98,8 @@
             <article class="glass-panel settings-panel">
                 <div class="panel-heading">
                     <div>
-                        <span class="panel-kicker">第二步</span>
                         <h2>确认学期信息</h2>
                     </div>
-                    <span class="preset-badge">长安校区</span>
                 </div>
 
                 <div class="settings-form">
@@ -198,7 +152,6 @@
         <section class="review-section" id="review-section" hidden aria-labelledby="review-title">
             <div class="review-heading">
                 <div>
-                    <span class="panel-kicker">第三步</span>
                     <h2 id="review-title">核对识别结果</h2>
                     <p id="review-subtitle">每项内容都可以点击修改，确认无误后再导出。</p>
                 </div>
@@ -248,7 +201,7 @@
                 <div class="schedule-toolbar">
                     <div>
                         <h3>课程明细</h3>
-                        <p>同一课程更换教师、教室或节次时会分开保留。</p>
+                        <p>相同时间地点的分周教师合并显示，教室或节次变化时分别保留。</p>
                     </div>
                     <button class="text-button danger-text" id="clear-courses" type="button">清空结果</button>
                 </div>
@@ -256,27 +209,13 @@
             </article>
         </section>
 
-        <section class="confidence-strip" aria-label="识别能力说明">
-            <div>
-                <span class="strip-number">01</span>
-                <p><strong>周次不会再黏进课程名</strong><small>“10-17大学英语核心能力”会拆为课程名与第 10–17 周。</small></p>
-            </div>
-            <div>
-                <span class="strip-number">02</span>
-                <p><strong>换教师不再被覆盖</strong><small>相同节次下，不同教师与教室分别生成独立排课段。</small></p>
-            </div>
-            <div>
-                <span class="strip-number">03</span>
-                <p><strong>导出前主动体检</strong><small>检查缺失字段、异常命名、重复课次与时间冲突。</small></p>
-            </div>
-        </section>
     </main>
 
     <dialog class="course-dialog" id="course-dialog" aria-labelledby="dialog-title">
         <form id="course-form">
             <div class="dialog-handle" aria-hidden="true"></div>
             <div class="dialog-heading">
-                <div><span class="panel-kicker">课程详情</span><h2 id="dialog-title">编辑课程</h2></div>
+                <div><h2 id="dialog-title">编辑课程</h2></div>
                 <button class="icon-button dialog-close" id="dialog-close" type="button" aria-label="关闭">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>
                 </button>

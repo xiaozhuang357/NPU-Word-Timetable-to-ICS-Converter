@@ -3,6 +3,7 @@ import {
     NPU_PERIODS,
     SEMESTER_PRESETS,
     analyzeSchedule,
+    consolidateCourseRecords,
     formatWeeks,
     generateIcs,
     normalizeText,
@@ -46,6 +47,12 @@ function colorForCourse(course) {
     return COURSE_COLORS[Math.abs(hash) % COURSE_COLORS.length];
 }
 
+function periodLabel(course) {
+    return course.startPeriod === course.endPeriod
+        ? `第 ${course.startPeriod} 节`
+        : `第 ${course.startPeriod}–${course.endPeriod} 节`;
+}
+
 function totalWeeks() {
     return Math.max(1, Math.min(30, Number.parseInt($('#total-weeks').value, 10) || 18));
 }
@@ -86,7 +93,7 @@ function setParseState(type, title, detail, percent) {
 
 function updateDropZone(fileName = '') {
     $('#drop-title').textContent = fileName || '拖入课表，或点击选择';
-    $('#drop-subtitle').textContent = fileName ? '文件已就绪，可随时重新识别' : '支持教务系统导出的 .docx 文件';
+    $('#drop-subtitle').textContent = fileName ? '文件已就绪，可随时重新识别' : '支持教务系统导出的 .docx 文件 · 仅在本机处理';
     $('#reparse-button').hidden = !state.fileBuffer;
 }
 
@@ -257,14 +264,14 @@ function loadDemo() {
     state.fileName = '';
     state.parseWarnings = [];
     state.parseMessages = ['已载入演示课表，用于体验核对和导出流程。'];
-    state.courses = [
+    state.courses = consolidateCourseRecords([
         { name: '大学英语核心能力', room: '教西 B1-302', teacher: '李老师', day: 1, startPeriod: 3, endPeriod: 4, weeks: [10, 11, 12, 13, 14, 15, 16, 17] },
         { name: '算法分析与设计', room: '启真楼 204-2', teacher: '罗建超', day: 3, startPeriod: 1, endPeriod: 2, weeks: [8, 9, 10, 11] },
         { name: '软件测试', room: '启真楼 204-2', teacher: '郑炜', day: 5, startPeriod: 1, endPeriod: 2, weeks: [11, 12, 13, 14] },
         { name: '软件测试', room: '启真楼 204-2', teacher: '高利鹏', day: 5, startPeriod: 1, endPeriod: 2, weeks: [15, 16] },
         { name: '软件测试', room: '启真楼 204-2', teacher: '蔡文静', day: 5, startPeriod: 1, endPeriod: 2, weeks: [17, 18] },
         { name: '互联网系统综合项目实践', room: '教西 B1-203', teacher: '金强国', day: 2, startPeriod: 11, endPeriod: 13, weeks: [9, 10, 11, 12, 13] },
-    ].map(course => ({ ...course, id: state.nextId++ }));
+    ]).map(course => ({ ...course, id: state.nextId++ }));
     updateDropZone();
     renderDiagnostics();
     setParseState('done', '演示课表已就绪', '包含周次拆分、三节连排与换教师场景。', 100);
@@ -370,6 +377,8 @@ function renderDayTabs() {
 
 function renderScheduleGrid() {
     const courses = visibleCourses();
+    const scheduleGrid = $('#schedule-grid');
+    scheduleGrid.style.setProperty('--period-count', String(state.periods.length));
     const parts = ['<div class="grid-corner" style="grid-column:1;grid-row:1"></div>'];
     DAYS.forEach((day, index) => {
         parts.push(`<div class="day-header" style="grid-column:${index + 2};grid-row:1">${day}</div>`);
@@ -390,20 +399,21 @@ function renderScheduleGrid() {
     });
 
     grouped.forEach(group => {
+        group.sort((left, right) => (left.weeks[0] ?? 0) - (right.weeks[0] ?? 0) || left.name.localeCompare(right.name, 'zh-CN'));
         const course = group[0];
         const span = Math.max(1, course.endPeriod - course.startPeriod + 1);
         const cards = group.map(item => `
-            <button class="course-card" type="button" data-course-id="${item.id}" style="--course-color:${colorForCourse(item)}">
+            <button class="course-card" type="button" data-course-id="${item.id}" style="--course-color:${colorForCourse(item)}" aria-label="${escapeHtml(`${item.name}，${periodLabel(item)}，${formatWeeks(item.weeks)}`)}">
                 <span class="course-card-inner">
                     <strong>${escapeHtml(item.name)}</strong>
                     <span>${escapeHtml(item.room || '教室待核对')}</span>
-                    <small>${escapeHtml(formatWeeks(item.weeks))}</small>
+                    <small>${escapeHtml(periodLabel(item))} · ${escapeHtml(formatWeeks(item.weeks))}</small>
                 </span>
             </button>
         `).join('');
-        parts.push(`<div class="course-stack" style="grid-column:${course.day + 1};grid-row:${course.startPeriod + 1}/span ${span}">${cards}</div>`);
+        parts.push(`<div class="course-stack" data-count="${group.length}" style="--course-count:${group.length};grid-column:${course.day + 1};grid-row:${course.startPeriod + 1}/span ${span}">${cards}</div>`);
     });
-    $('#schedule-grid').innerHTML = parts.join('');
+    scheduleGrid.innerHTML = parts.join('');
 }
 
 function renderAgenda() {
@@ -517,10 +527,19 @@ function saveCourse(event) {
     }
     const startPeriod = Number($('#course-start-period').value);
     const endPeriod = Math.max(startPeriod, Number($('#course-end-period').value));
+    const teacher = normalizeText($('#course-teacher').value);
+    const existingCourse = state.courses.find(course => course.id === state.editingId);
+    const keepsTeacherSegments = existingCourse
+        && existingCourse.teacher === teacher
+        && existingCourse.weeks.length === weeks.length
+        && existingCourse.weeks.every((week, index) => week === weeks[index]);
     const data = {
         name,
         room: normalizeText($('#course-room').value),
-        teacher: normalizeText($('#course-teacher').value),
+        teacher,
+        teacherSegments: keepsTeacherSegments
+            ? existingCourse.teacherSegments
+            : teacher ? [{ teacher, weeks }] : [],
         day: Number($('#course-day').value),
         startPeriod,
         endPeriod,
@@ -533,6 +552,10 @@ function saveCourse(event) {
     } else {
         state.courses.push({ ...data, id: state.nextId++ });
     }
+    state.courses = consolidateCourseRecords(state.courses).map(course => ({
+        ...course,
+        id: course.id ?? state.nextId++,
+    }));
     closeCourseDialog();
     renderAll();
     setFlowStep(3);
@@ -613,6 +636,10 @@ function bindSettings() {
         state.courses = state.courses.map(course => ({
             ...course,
             weeks: course.weeks.filter(week => week <= totalWeeks()),
+            teacherSegments: (course.teacherSegments || []).map(segment => ({
+                ...segment,
+                weeks: (segment.weeks || []).filter(week => week <= totalWeeks()),
+            })).filter(segment => segment.weeks.length),
         }));
         renderAll();
         if (state.fileBuffer) showToast('教学周数已更新，可点击“重新识别”应用到原文件');
