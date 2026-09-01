@@ -1,28 +1,28 @@
 :root {
     color-scheme: light;
-    --bg: #f5f5f7;
-    --surface: rgba(255, 255, 255, .82);
-    --surface-solid: #fff;
-    --surface-soft: rgba(118, 118, 128, .07);
-    --surface-strong: rgba(255, 255, 255, .94);
-    --text: #1d1d1f;
-    --text-secondary: #6e6e73;
-    --text-tertiary: #8e8e93;
-    --line: rgba(60, 60, 67, .13);
-    --line-strong: rgba(60, 60, 67, .21);
-    --blue: #007aff;
-    --blue-hover: #006ee6;
-    --blue-soft: rgba(0, 122, 255, .1);
-    --violet: #5856d6;
-    --green: #34c759;
-    --orange: #ff9f0a;
-    --red: #ff3b30;
-    --shadow-panel: 0 30px 80px rgba(0, 0, 0, .075), 0 1px 1px rgba(0, 0, 0, .03);
-    --shadow-float: 0 14px 40px rgba(0, 0, 0, .12);
-    --radius-xl: 30px;
-    --radius-lg: 22px;
-    --radius-md: 16px;
-    --radius-sm: 12px;
+    --bg: #f2f2f0;
+    --surface: #ffffff;
+    --surface-solid: #ffffff;
+    --surface-soft: #ececea;
+    --surface-strong: #f7f7f5;
+    --text: #26262b;
+    --text-secondary: #5f5f66;
+    --text-tertiary: #8b8b92;
+    --line: rgba(0, 0, 0, .09);
+    --line-strong: rgba(0, 0, 0, .16);
+    --blue: #4a6fa5;
+    --blue-hover: #3d5f8f;
+    --blue-soft: rgba(74, 111, 165, .09);
+    --violet: #7a6ba8;
+    --green: #3f7d5f;
+    --orange: #b5813a;
+    --red: #a8544d;
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, .04);
+    --shadow-float: 0 6px 20px rgba(0, 0, 0, .12);
+    --radius-xl: 4px;
+    --radius-lg: 4px;
+    --radius-md: 4px;
+    --radius-sm: 4px;
     --max-width: 1380px;
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "HarmonyOS Sans SC", "Segoe UI", sans-serif;
     --mono: "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
@@ -30,21 +30,25 @@
 
 :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #09090b;
-    --surface: rgba(28, 28, 30, .76);
-    --surface-solid: #1c1c1e;
-    --surface-soft: rgba(118, 118, 128, .15);
-    --surface-strong: rgba(36, 36, 38, .94);
-    --text: #f5f5f7;
-    --text-secondary: #aeaeb2;
-    --text-tertiary: #8e8e93;
-    --line: rgba(235, 235, 245, .12);
-    --line-strong: rgba(235, 235, 245, .2);
-    --blue: #0a84ff;
-    --blue-hover: #409cff;
-    --blue-soft: rgba(10, 132, 255, .16);
-    --shadow-panel: 0 30px 100px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 255, 255, .035);
-    --shadow-float: 0 16px 44px rgba(0, 0, 0, .48);
+    --bg: #121214;
+    --surface: #1c1d20;
+    --surface-solid: #1a1b1e;
+    --surface-soft: #252629;
+    --surface-strong: #222327;
+    --text: #e8e7e4;
+    --text-secondary: #a3a4ab;
+    --text-tertiary: #77787e;
+    --line: rgba(255, 255, 255, .09);
+    --line-strong: rgba(255, 255, 255, .16);
+    --blue: #7d9cc4;
+    --blue-hover: #8fabd0;
+    --blue-soft: rgba(125, 156, 196, .13);
+    --violet: #9a8cc0;
+    --green: #5c8a70;
+    --orange: #c08a4a;
+    --red: #c06a63;
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-float: 0 6px 20px rgba(0, 0, 0, .38);
 }
 
 * {
@@ -100,7 +104,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible {
-    outline: 3px solid rgba(0, 122, 255, .3);
+    outline: 3px solid var(--blue);
     outline-offset: 2px;
 }
 
@@ -179,7 +183,7 @@ svg {
     padding: 0;
     place-items: center;
     border: 1px solid var(--line);
-    border-radius: 13px;
+    border-radius: 4px;
     background: var(--surface-soft);
     color: var(--text-secondary);
     transition: transform .18s ease, background .18s ease, color .18s ease;
@@ -218,7 +222,7 @@ svg {
     margin: 0 auto 22px;
     padding: 12px 16px;
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 4px;
     background: var(--surface-solid);
 }
 
@@ -284,7 +288,7 @@ svg {
 .schedule-panel,
 .course-list-panel {
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: 4px;
     background: var(--surface-solid);
 }
 
@@ -312,7 +316,7 @@ svg {
     position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border-radius: 13px;
+    border-radius: 4px;
     background: var(--surface-soft);
     border: 1px solid var(--line);
     overflow: hidden;
@@ -324,9 +328,9 @@ svg {
     left: 0;
     bottom: 0;
     width: 50%;
-    border-radius: 12px;
+    border-radius: 4px;
     background: var(--surface-strong);
-    box-shadow: 0 1px 5px rgba(0, 0, 0, .3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .22);
     transition: transform .32s cubic-bezier(.22, 1, .36, 1);
 }
 
@@ -338,7 +342,7 @@ svg {
     position: relative;
     z-index: 1;
     border: none;
-    border-radius: 10px;
+    border-radius: 4px;
     background: transparent;
     color: var(--text-secondary);
     font: inherit;
@@ -361,21 +365,25 @@ svg {
 .week-stepper {
     display: flex;
     align-items: stretch;
-    gap: 6px;
+    gap: 8px;
 }
 
 .step-btn {
     width: 36px;
+    height: 36px;
     display: grid;
     place-items: center;
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
     background: var(--surface);
     color: var(--text-secondary);
-    font-size: 16px;
-    line-height: 1;
     cursor: pointer;
     transition: all .16s ease;
+}
+
+.step-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .step-btn:hover:not(:disabled) {
@@ -399,12 +407,12 @@ svg {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    min-width: 104px;
-    padding: 0 12px 0 14px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    gap: 10px;
+    min-width: 118px;
+    padding: 0 14px 0 16px;
+    border: 1px solid var(--line-strong);
     background: var(--surface);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
     color: var(--text);
     font: inherit;
     font-size: 13px;
@@ -428,14 +436,14 @@ svg {
     top: calc(100% + 6px);
     left: 0;
     z-index: 40;
-    min-width: 132px;
+    min-width: 140px;
     max-height: 264px;
     overflow-y: auto;
     padding: 6px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--surface-strong);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, .35);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    background: var(--surface-solid);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .4);
     animation: weekMenuIn .16s ease;
 }
 
@@ -448,7 +456,7 @@ svg {
     width: 100%;
     text-align: left;
     border: none;
-    border-radius: 9px;
+    border-radius: 4px;
     background: transparent;
     color: var(--text-secondary);
     font: inherit;
@@ -514,7 +522,7 @@ svg {
 .week-badge {
     align-self: center;
     border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent);
-    border-radius: 999px;
+    border-radius: 4px;
     background: var(--blue-soft);
     color: var(--blue);
     font-size: 10px;
@@ -586,7 +594,7 @@ svg {
     padding: clamp(18px, 2.4vw, 26px);
     overflow: hidden;
     border: 1px dashed var(--line-strong);
-    border-radius: 14px;
+    border-radius: 4px;
     background: var(--surface-soft);
     transition: border-color .18s ease, background .18s ease;
 }
@@ -611,7 +619,7 @@ svg {
     width: 48px;
     height: 48px;
     place-items: center;
-    border-radius: 12px;
+    border-radius: 4px;
     background: var(--blue-soft);
     color: var(--blue);
 }
@@ -649,7 +657,7 @@ svg {
     flex: 0 0 auto;
     padding: 9px 14px;
     border: 1px solid var(--line);
-    border-radius: 11px;
+    border-radius: 4px;
     background: var(--surface-strong);
     color: var(--blue);
     font-size: 12px;
@@ -660,7 +668,7 @@ svg {
     margin-top: 14px;
     padding: 14px;
     border: 1px solid var(--line);
-    border-radius: 17px;
+    border-radius: 4px;
     background: var(--surface-soft);
 }
 
@@ -676,7 +684,7 @@ svg {
     width: 28px;
     height: 28px;
     flex: 0 0 28px;
-    border: 2px solid rgba(0, 122, 255, .16);
+    border: 2px solid rgba(86, 116, 160, .16);
     border-top-color: var(--blue);
     border-radius: 50%;
     animation: spin .9s linear infinite;
@@ -741,7 +749,7 @@ svg {
     height: 4px;
     margin-top: 12px;
     overflow: hidden;
-    border-radius: 99px;
+    border-radius: 4px;
     background: var(--line);
 }
 
@@ -750,7 +758,7 @@ svg {
     width: 0;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, var(--blue), var(--violet));
+    background: var(--blue);
     transition: width .4s cubic-bezier(.2, .8, .2, 1);
 }
 
@@ -771,7 +779,7 @@ svg {
     gap: 8px;
     min-height: 44px;
     padding: 0 18px;
-    border-radius: 13px;
+    border-radius: 4px;
     font-size: 13px;
     font-weight: 680;
     letter-spacing: -.01em;
@@ -798,14 +806,12 @@ svg {
 
 .button-primary {
     background: var(--blue);
-    box-shadow: 0 10px 22px rgba(0, 122, 255, .2);
-    color: #fff;
+        color: #fff;
 }
 
 .button-primary:hover:not(:disabled) {
     background: var(--blue-hover);
-    box-shadow: 0 13px 26px rgba(0, 122, 255, .26);
-}
+    }
 
 .button-secondary {
     border: 1px solid var(--line);
@@ -869,7 +875,7 @@ svg {
 .diagnostic-content {
     margin-top: 10px;
     padding: 13px;
-    border-radius: 14px;
+    border-radius: 4px;
     background: var(--surface-soft);
 }
 
@@ -948,7 +954,7 @@ svg {
     min-height: 46px;
     padding: 0 13px;
     border: 1px solid transparent;
-    border-radius: 13px;
+    border-radius: 4px;
     outline: none;
     background: var(--surface-soft);
     color: var(--text);
@@ -973,9 +979,9 @@ svg {
 .field select:focus,
 .field textarea:focus,
 .compact-field select:focus {
-    border-color: rgba(0, 122, 255, .45);
+    border-color: rgba(86, 116, 160, .45);
     background: var(--surface-solid);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, .09);
+    box-shadow: 0 0 0 3px var(--blue-soft);
 }
 
 .input-suffix {
@@ -1001,8 +1007,8 @@ svg {
     gap: 11px;
     margin-top: 17px;
     padding: 12px 13px;
-    border: 1px solid rgba(0, 122, 255, .12);
-    border-radius: 15px;
+    border: 1px solid rgba(86, 116, 160, .12);
+    border-radius: 4px;
     background: var(--blue-soft);
 }
 
@@ -1089,7 +1095,7 @@ svg {
     align-items: center;
     min-width: 0;
     padding: 6px 8px;
-    border-radius: 11px;
+    border-radius: 4px;
     background: var(--surface-soft);
 }
 
@@ -1151,10 +1157,8 @@ svg {
     min-height: 88px;
     padding: 15px;
     border: 1px solid var(--line);
-    border-radius: 20px;
+    border-radius: 4px;
     background: var(--surface);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
 }
 
 .stat-symbol {
@@ -1163,7 +1167,7 @@ svg {
     width: 38px;
     height: 38px;
     place-items: center;
-    border-radius: 12px;
+    border-radius: 4px;
     background: var(--blue-soft);
     color: var(--blue);
 }
@@ -1207,18 +1211,18 @@ svg {
     margin-bottom: 10px;
     padding: 15px 18px;
     border: 1px solid rgba(52, 199, 89, .2);
-    border-radius: 22px;
-    background: linear-gradient(110deg, rgba(52, 199, 89, .1), rgba(0, 122, 255, .055));
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--green) 10%, transparent);
 }
 
 .quality-card.has-warnings {
     border-color: rgba(255, 159, 10, .22);
-    background: linear-gradient(110deg, rgba(255, 159, 10, .11), rgba(255, 204, 0, .05));
+    background: color-mix(in srgb, var(--orange) 10%, transparent);
 }
 
 .quality-card.has-errors {
     border-color: rgba(255, 59, 48, .22);
-    background: linear-gradient(110deg, rgba(255, 59, 48, .1), rgba(255, 159, 10, .04));
+    background: color-mix(in srgb, var(--red) 9%, transparent);
 }
 
 .quality-gauge {
@@ -1269,7 +1273,7 @@ svg {
     margin-bottom: 10px;
     padding: 12px;
     border: 1px solid var(--line);
-    border-radius: 18px;
+    border-radius: 4px;
     background: var(--surface);
 }
 
@@ -1278,7 +1282,7 @@ svg {
     align-items: center;
     gap: 10px;
     padding: 9px 10px;
-    border-radius: 12px;
+    border-radius: 4px;
     background: var(--surface-soft);
     color: var(--text-secondary);
     font-size: 11px;
@@ -1337,7 +1341,7 @@ svg {
 .schedule-scroll {
     overflow-x: auto;
     border: 1px solid var(--line);
-    border-radius: 18px;
+    border-radius: 4px;
     background: var(--surface-soft);
     overscroll-behavior-x: contain;
 }
@@ -1368,8 +1372,6 @@ svg {
     z-index: 8;
     top: 0;
     background: var(--surface-strong);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
 }
 
 .grid-corner {
@@ -1439,9 +1441,9 @@ svg {
     min-inline-size: var(--course-card-size);
     padding: 8px 8px 8px 10px;
     overflow: hidden;
-    border: 1px solid rgba(0, 122, 255, .14);
-    border-radius: 11px;
-    background: linear-gradient(135deg, rgba(0, 122, 255, .15), rgba(90, 200, 250, .095));
+    border: 1px solid rgba(86, 116, 160, .14);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--course-color, var(--blue)) 12%, var(--surface-solid));
     color: var(--text);
     text-align: left;
     pointer-events: auto;
@@ -1454,16 +1456,15 @@ svg {
     bottom: 9px;
     left: 4px;
     width: 3px;
-    border-radius: 99px;
+    border-radius: 4px;
     background: var(--course-color, var(--blue));
     content: "";
 }
 
 .course-card:hover {
     z-index: 5;
-    border-color: rgba(0, 122, 255, .3);
-    box-shadow: 0 10px 24px rgba(0, 122, 255, .13);
-    transform: translateY(-1px);
+    border-color: rgba(86, 116, 160, .3);
+        transform: translateY(-1px);
 }
 
 .course-card-inner {
@@ -1509,7 +1510,7 @@ svg {
     min-height: 76px;
     padding: 12px 13px;
     border: 1px solid transparent;
-    border-radius: 16px;
+    border-radius: 4px;
     background: var(--surface-soft);
     text-align: left;
     transition: background .16s ease, border-color .16s ease, transform .16s ease;
@@ -1524,7 +1525,7 @@ svg {
 .course-row-mark {
     width: 5px;
     height: 34px;
-    border-radius: 99px;
+    border-radius: 4px;
     background: var(--course-color, var(--blue));
 }
 
@@ -1553,7 +1554,7 @@ svg {
 
 .course-row-weeks {
     padding: 5px 8px;
-    border-radius: 9px;
+    border-radius: 4px;
     background: var(--surface-strong);
     color: var(--text-secondary);
     font-size: 9px;
@@ -1566,10 +1567,10 @@ svg {
     padding: 0;
     overflow: auto;
     border: 1px solid rgba(255, 255, 255, .7);
-    border-radius: 28px;
+    border-radius: 4px;
     outline: 0;
     background: var(--surface-strong);
-    box-shadow: 0 38px 100px rgba(0, 0, 0, .28);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .32);
     color: var(--text);
 }
 
@@ -1579,8 +1580,6 @@ svg {
 
 .course-dialog::backdrop {
     background: rgba(0, 0, 0, .32);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 .course-dialog[open] {
@@ -1629,7 +1628,7 @@ svg {
     min-height: 32px;
     padding: 0 11px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 4px;
     background: var(--surface-soft);
     color: var(--text-secondary);
     font-size: 10px;
@@ -1638,7 +1637,7 @@ svg {
 
 .week-shortcuts button:hover,
 .week-picker button:hover {
-    border-color: rgba(0, 122, 255, .3);
+    border-color: rgba(86, 116, 160, .3);
     color: var(--blue);
 }
 
@@ -1657,8 +1656,7 @@ svg {
     border-color: var(--blue);
     background: var(--blue);
     color: #fff;
-    box-shadow: 0 5px 12px rgba(0, 122, 255, .18);
-}
+    }
 
 .dialog-actions {
     display: grid;
@@ -1678,7 +1676,7 @@ svg {
     max-width: min(520px, calc(100% - 32px));
     padding: 12px 17px;
     border: 1px solid rgba(255, 255, 255, .14);
-    border-radius: 999px;
+    border-radius: 4px;
     background: rgba(28, 28, 30, .9);
     box-shadow: var(--shadow-float);
     color: #fff;
@@ -1689,8 +1687,6 @@ svg {
     text-align: center;
     transform: translate(-50%, 16px) scale(.97);
     transition: opacity .2s ease, transform .24s cubic-bezier(.2, .8, .2, 1);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
 }
 
 .toast.is-visible {
@@ -1702,7 +1698,7 @@ noscript {
     display: block;
     margin: 20px;
     padding: 16px;
-    border-radius: 12px;
+    border-radius: 4px;
     background: rgba(255, 59, 48, .1);
     color: var(--red);
 }
@@ -1730,7 +1726,7 @@ noscript {
     .icon-button {
         width: 38px;
         height: 38px;
-        border-radius: 12px;
+        border-radius: 4px;
     }
 
     .app-shell {
@@ -1741,7 +1737,7 @@ noscript {
     .flow-nav {
         width: 100%;
         padding: 10px;
-        border-radius: 12px;
+        border-radius: 4px;
     }
 
     .flow-step {
@@ -1768,7 +1764,7 @@ noscript {
 
     .glass-panel {
         padding: 20px;
-        border-radius: 14px;
+        border-radius: 4px;
     }
 
     .drop-zone {
@@ -1824,7 +1820,7 @@ noscript {
     .stat-card {
         min-height: 76px;
         padding: 11px;
-        border-radius: 17px;
+        border-radius: 4px;
     }
 
     .stat-symbol {
@@ -1850,7 +1846,7 @@ noscript {
     .schedule-panel,
     .course-list-panel {
         padding: 18px;
-        border-radius: 14px;
+        border-radius: 4px;
     }
 
     .schedule-toolbar {
@@ -1876,7 +1872,7 @@ noscript {
         gap: 4px;
         margin-bottom: 12px;
         padding: 4px;
-        border-radius: 14px;
+        border-radius: 4px;
         background: var(--surface-soft);
     }
 
@@ -1884,7 +1880,7 @@ noscript {
         min-width: 0;
         min-height: 36px;
         padding: 0;
-        border-radius: 10px;
+        border-radius: 4px;
         background: transparent;
         color: var(--text-secondary);
         font-size: 10px;
@@ -1932,7 +1928,7 @@ noscript {
         padding: 12px 13px 12px 16px;
         overflow: hidden;
         border: 1px solid var(--line);
-        border-radius: 16px;
+        border-radius: 4px;
         background: var(--surface-soft);
         text-align: left;
     }
@@ -1943,7 +1939,7 @@ noscript {
         bottom: 11px;
         left: 6px;
         width: 3px;
-        border-radius: 99px;
+        border-radius: 4px;
         background: var(--course-color, var(--blue));
         content: "";
     }
@@ -1964,7 +1960,7 @@ noscript {
     .agenda-empty {
         padding: 34px 16px;
         border: 1px dashed var(--line-strong);
-        border-radius: 16px;
+        border-radius: 4px;
         color: var(--text-tertiary);
         font-size: 11px;
         text-align: center;
@@ -1978,7 +1974,7 @@ noscript {
         width: 100%;
         max-height: calc(100vh - 18px);
         margin: auto 0 0;
-        border-radius: 28px 28px 0 0;
+        border-radius: 4px 28px 0 0;
     }
 
     .course-dialog[open] {
@@ -1999,7 +1995,7 @@ noscript {
         width: 38px;
         height: 5px;
         margin: 0 auto 14px;
-        border-radius: 99px;
+        border-radius: 4px;
         background: var(--line-strong);
     }
 
