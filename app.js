@@ -576,18 +576,45 @@ function renderAgenda() {
 
 function renderCourseList() {
     const sorted = [...state.courses].sort((left, right) => (
-        left.day - right.day || left.startPeriod - right.startPeriod || left.weeks[0] - right.weeks[0]
+        left.day - right.day || left.startPeriod - right.startPeriod || (left.weeks[0] ?? 0) - (right.weeks[0] ?? 0)
     ));
-    $('#course-list').innerHTML = sorted.map(course => `
-        <button class="course-row" type="button" data-course-id="${course.id}" style="--course-color:${colorForCourse(course)}">
-            <span class="course-row-mark"></span>
-            <span class="course-row-main">
-                <strong>${escapeHtml(course.name)}</strong>
-                <span>${DAYS[course.day - 1]} · 第 ${course.startPeriod}-${course.endPeriod} 节 · ${escapeHtml(course.room || '教室待核对')}${course.teacher ? ` · ${escapeHtml(course.teacher)}` : ''}</span>
-            </span>
-            <span class="course-row-weeks">${escapeHtml(formatWeeks(course.weeks))}</span>
-        </button>
-    `).join('');
+    const groups = new Map();
+    sorted.forEach(course => {
+        if (!groups.has(course.day)) groups.set(course.day, []);
+        groups.get(course.day).push(course);
+    });
+    const parts = [];
+    [...groups.entries()].sort((left, right) => left[0] - right[0]).forEach(([day, list]) => {
+        parts.push(`<div class="course-group">
+            <div class="course-group-head">
+                <span>${DAYS[day - 1]}</span>
+                <small>${list.length} 门课</small>
+            </div>
+            <div class="course-group-rows">
+                ${list.map(course => `
+                    <article class="course-row" data-course-id="${course.id}" style="--course-color:${colorForCourse(course)}" tabindex="0" role="button" aria-label="${escapeHtml(`编辑：${course.name}`)}">
+                        <span class="course-row-mark"></span>
+                        <span class="course-row-main">
+                            <strong>${escapeHtml(course.name)}</strong>
+                            <span>第 ${course.startPeriod}-${course.endPeriod} 节 · ${escapeHtml(course.room || '教室待核对')}${course.teacher ? ` · ${escapeHtml(course.teacher)}` : ''}</span>
+                        </span>
+                        <span class="course-row-weeks">${escapeHtml(formatWeeks(course.weeks))}</span>
+                        <span class="course-row-actions">
+                            <button type="button" data-course-edit="${course.id}">编辑</button>
+                            <button type="button" data-course-delete="${course.id}">删除</button>
+                        </span>
+                    </article>
+                `).join('')}
+            </div>
+        </div>`);
+    });
+    $('#course-list').innerHTML = parts.join('');
+}
+
+function removeCourseById(id) {
+    state.courses = state.courses.filter(course => course.id !== id);
+    renderAll();
+    showToast('课程已删除');
 }
 
 function renderAll() {
@@ -827,11 +854,20 @@ function bindReview() {
         renderDayTabs();
         renderAgenda();
     });
-    ['#schedule-grid', '#agenda-list', '#course-list'].forEach(selector => {
+    ['#schedule-grid', '#agenda-list'].forEach(selector => {
         $(selector).addEventListener('click', event => {
             const button = event.target.closest('[data-course-id]');
             if (button) editCourseById(button.dataset.courseId);
         });
+    });
+    $('#course-list').addEventListener('click', event => {
+        const del = event.target.closest('[data-course-delete]');
+        if (del) {
+            removeCourseById(del.dataset.courseDelete);
+            return;
+        }
+        const row = event.target.closest('[data-course-id]');
+        if (row) editCourseById(row.dataset.courseId);
     });
     $('#issue-list').addEventListener('click', event => {
         const button = event.target.closest('[data-issue-index]');

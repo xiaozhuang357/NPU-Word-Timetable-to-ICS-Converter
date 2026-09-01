@@ -1498,21 +1498,51 @@ svg {
 
 .course-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.course-group {
+    display: grid;
+    gap: 8px;
+}
+
+.course-group-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 2px;
+}
+
+.course-group-head span {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.course-group-head small {
+    font-size: 9px;
+    color: var(--text-tertiary);
+}
+
+.course-group-rows {
+    display: grid;
     gap: 8px;
 }
 
 .course-row {
     display: grid;
-    grid-template-columns: 9px minmax(0, 1fr) auto;
+    grid-template-columns: 9px minmax(0, 1fr) auto auto;
     gap: 12px;
     align-items: center;
-    min-height: 76px;
+    min-height: 72px;
     padding: 12px 13px;
     border: 1px solid transparent;
     border-radius: 4px;
     background: var(--surface-soft);
+    color: var(--text);
+    font: inherit;
     text-align: left;
+    cursor: pointer;
     transition: background .16s ease, border-color .16s ease, transform .16s ease;
 }
 
@@ -1526,7 +1556,7 @@ svg {
     width: 5px;
     height: 34px;
     border-radius: 4px;
-    background: var(--course-color, var(--blue));
+    background: color-mix(in srgb, var(--course-color, var(--blue)) 72%, var(--surface-solid));
 }
 
 .course-row-main {
@@ -1554,11 +1584,41 @@ svg {
 
 .course-row-weeks {
     padding: 5px 8px;
+    border: 1px solid var(--line);
     border-radius: 4px;
     background: var(--surface-strong);
     color: var(--text-secondary);
     font-size: 9px;
     white-space: nowrap;
+}
+
+.course-row-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.course-row-actions button {
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.course-row-actions button:first-child:hover {
+    color: var(--blue);
+    border-color: var(--line-strong);
+    background: var(--blue-soft);
+}
+
+.course-row-actions button:last-child:hover {
+    color: var(--red);
+    border-color: rgba(192, 106, 99, .4);
+    background: color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .course-dialog {
