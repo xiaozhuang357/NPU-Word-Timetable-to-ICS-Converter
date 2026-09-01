@@ -405,9 +405,12 @@ function renderWeekNav() {
     $('#week-mode-single').classList.toggle('is-active', single);
     $('#week-mode-all').setAttribute('aria-selected', String(!single));
     $('#week-mode-single').setAttribute('aria-selected', String(single));
+    $('#week-segmented').classList.toggle('is-week', single);
 
-    const stepper = $('#week-stepper');
-    stepper.hidden = !single;
+    const collapse = $('#week-collapse');
+    const controls = $('#week-controls');
+    collapse.classList.toggle('is-open', single);
+    controls.inert = !single;
     if (single) {
         $('#week-select-label').textContent = `第 ${state.activeWeek} 周`;
         const menu = $('#week-picker-menu');
@@ -424,7 +427,7 @@ function renderWeekNav() {
         $('#week-next').disabled = state.activeWeek >= total;
     }
 
-    $('#week-badge').hidden = !(single && real && real.week === state.activeWeek);
+    $('#week-badge').classList.toggle('is-hidden', !(single && real && real.week === state.activeWeek));
 
     const visible = visibleCourses();
     const summary = $('#schedule-summary');
@@ -446,6 +449,7 @@ function renderWeekNav() {
 
 function setViewMode(mode) {
     state.viewMode = mode === 'week' ? 'week' : 'all';
+    closeWeekMenu();
     renderWeekNav();
     renderScheduleGrid();
     renderAgenda();

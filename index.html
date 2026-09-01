@@ -186,22 +186,27 @@
                         <p id="schedule-summary">全部周次合并预览；点击卡片可修改。</p>
                     </div>
                     <div class="week-nav" id="week-nav">
-                        <div class="week-segmented" role="tablist" aria-label="周次显示模式">
+                        <div class="week-segmented" id="week-segmented" role="tablist" aria-label="周次显示模式">
+                            <span class="seg-thumb" aria-hidden="true"></span>
                             <button class="seg-btn is-active" id="week-mode-all" type="button" role="tab" aria-selected="true">全部周次</button>
                             <button class="seg-btn" id="week-mode-single" type="button" role="tab" aria-selected="false">按周浏览</button>
                         </div>
-                        <div class="week-stepper" id="week-stepper" hidden>
-                            <button class="step-btn" id="week-prev" type="button" aria-label="上一周">&#8249;</button>
-                            <div class="week-select-wrap">
-                                <button id="week-picker-trigger" class="week-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                                    <span id="week-select-label">第 1 周</span>
-                                    <span class="week-chevron" aria-hidden="true"></span>
-                                </button>
-                                <div class="week-picker-menu" id="week-picker-menu" role="listbox" aria-label="选择周次" hidden></div>
+                        <div class="week-collapse" id="week-collapse">
+                            <div class="week-controls" id="week-controls">
+                                <div class="week-stepper" id="week-stepper">
+                                    <button class="step-btn" id="week-prev" type="button" aria-label="上一周">&#8249;</button>
+                                    <div class="week-select-wrap">
+                                        <button id="week-picker-trigger" class="week-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                                            <span id="week-select-label">第 1 周</span>
+                                            <span class="week-chevron" aria-hidden="true"></span>
+                                        </button>
+                                        <div class="week-picker-menu" id="week-picker-menu" role="listbox" aria-label="选择周次" hidden></div>
+                                    </div>
+                                    <button class="step-btn" id="week-next" type="button" aria-label="下一周">&#8250;</button>
+                                </div>
+                                <span class="week-badge" id="week-badge">本周</span>
                             </div>
-                            <button class="step-btn" id="week-next" type="button" aria-label="下一周">&#8250;</button>
                         </div>
-                        <span class="week-badge" id="week-badge" hidden>本周</span>
                     </div>
                 </div>
                 <div class="day-tabs" id="day-tabs" role="tablist" aria-label="选择星期"></div>
