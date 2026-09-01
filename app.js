@@ -383,7 +383,7 @@ function weekDate(week, day) {
     const date = new Date(anchor);
     date.setDate(date.getDate() + (week - 1) * 7 + (day - 1));
     const pad = n => String(n).padStart(2, '0');
-    return `${date.getMonth() + 1}.${pad(date.getDate())}`;
+    return `${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
 }
 function teachersForWeek(course) {
     if (state.viewMode !== 'week' || !state.activeWeek) return '';
@@ -409,13 +409,17 @@ function renderWeekNav() {
     const stepper = $('#week-stepper');
     stepper.hidden = !single;
     if (single) {
-        const select = $('#week-select');
-        const previous = Number(select.value) || state.activeWeek;
-        select.innerHTML = Array.from({ length: total }, (_, index) => (
-            `<option value="${index + 1}">第 ${index + 1} 周</option>`
-        )).join('');
-        const current = previous >= 1 && previous <= total ? previous : state.activeWeek;
-        select.value = String(current);
+        $('#week-select-label').textContent = `第 ${state.activeWeek} 周`;
+        const menu = $('#week-picker-menu');
+        if (Number(menu.dataset.total) !== total) {
+            menu.innerHTML = Array.from({ length: total }, (_, index) => (
+                `<button type="button" role="option" data-week="${index + 1}" class="week-picker-option">第 ${index + 1} 周</button>`
+            )).join('');
+            menu.dataset.total = String(total);
+        }
+        menu.querySelectorAll('.week-picker-option').forEach(button => {
+            button.classList.toggle('is-selected', Number(button.dataset.week) === state.activeWeek);
+        });
         $('#week-prev').disabled = state.activeWeek <= 1;
         $('#week-next').disabled = state.activeWeek >= total;
     }
@@ -455,6 +459,21 @@ function setActiveWeek(week) {
     renderScheduleGrid();
     renderAgenda();
     renderCourseList();
+}
+
+function openWeekMenu() {
+    const menu = $('#week-picker-menu');
+    if (menu.hidden) {
+        menu.hidden = false;
+        $('#week-picker-trigger').setAttribute('aria-expanded', 'true');
+    }
+    const active = menu.querySelector('.week-picker-option.is-selected');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+function closeWeekMenu() {
+    $('#week-picker-menu').hidden = true;
+    $('#week-picker-trigger').setAttribute('aria-expanded', 'false');
 }
 
 function initializeWeekView() {
@@ -778,7 +797,25 @@ function bindReview() {
     $('#week-mode-single').addEventListener('click', () => setViewMode('week'));
     $('#week-prev').addEventListener('click', () => setActiveWeek(state.activeWeek - 1));
     $('#week-next').addEventListener('click', () => setActiveWeek(state.activeWeek + 1));
-    $('#week-select').addEventListener('change', event => setActiveWeek(Number(event.target.value)));
+    $('#week-picker-trigger').addEventListener('click', openWeekMenu);
+    $('#week-picker-trigger').addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openWeekMenu();
+        }
+    });
+    $('#week-picker-menu').addEventListener('click', event => {
+        const button = event.target.closest('[data-week]');
+        if (!button) return;
+        setActiveWeek(Number(button.dataset.week));
+        closeWeekMenu();
+    });
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.week-select-wrap')) closeWeekMenu();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeWeekMenu();
+    });
     $('#day-tabs').addEventListener('click', event => {
         const button = event.target.closest('[data-day]');
         if (!button) return;
