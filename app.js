@@ -23,6 +23,9 @@ const state = {
     fileBuffer: null,
     fileName: '',
     activeDay: 1,
+    viewMode: 'all',
+    activeWeek: 1,
+    currentRealWeek: null,
     editingId: null,
     selectedWeeks: new Set(),
     nextId: 1,
@@ -161,7 +164,7 @@ function applySemesterPreset(key) {
     $('#start-date').value = preset.startDate;
     $('#total-weeks').value = String(preset.totalWeeks);
     $('#semester-name').value = `${preset.label.replace('季学期', '').trim()} · 西工大`;
-    renderWeekFilter();
+    renderWeekNav();
 }
 
 async function handleFile(file) {
@@ -230,6 +233,7 @@ async function parseCurrentFile() {
     }
 
     state.courses = parsed.courses.map(course => ({ ...course, id: state.nextId++ }));
+    initializeWeekView();
     const diagnostics = parsed.diagnostics;
     if (diagnostics) {
         parseMessage(`表格结构：${diagnostics.rows} 行 × ${diagnostics.columns} 列`);
@@ -272,6 +276,7 @@ function loadDemo() {
         { name: '软件测试', room: '启真楼 204-2', teacher: '蔡文静', day: 5, startPeriod: 1, endPeriod: 2, weeks: [17, 18] },
         { name: '互联网系统综合项目实践', room: '教西 B1-203', teacher: '金强国', day: 2, startPeriod: 11, endPeriod: 13, weeks: [9, 10, 11, 12, 13] },
     ]).map(course => ({ ...course, id: state.nextId++ }));
+    initializeWeekView();
     updateDropZone();
     renderDiagnostics();
     setParseState('done', '演示课表已就绪', '包含周次拆分、三节连排与换教师场景。', 100);
@@ -281,10 +286,8 @@ function loadDemo() {
 }
 
 function visibleCourses() {
-    const filter = $('#week-filter').value;
-    if (filter === 'all') return state.courses;
-    const week = Number(filter);
-    return state.courses.filter(course => course.weeks.includes(week));
+    if (state.viewMode === 'all' || !state.activeWeek) return state.courses;
+    return state.courses.filter(course => course.weeks.includes(state.activeWeek));
 }
 
 function renderStats(analysis) {
@@ -360,13 +363,94 @@ function renderQuality(analysis) {
     $('#export-button').disabled = !analysis.canExport;
 }
 
-function renderWeekFilter() {
-    const select = $('#week-filter');
-    const previous = select.value || 'all';
-    select.innerHTML = '<option value="all">全部周次</option>' + Array.from({ length: totalWeeks() }, (_, index) => (
-        `<option value="${index + 1}">第 ${index + 1} 周</option>`
-    )).join('');
-    select.value = [...select.options].some(option => option.value === previous) ? previous : 'all';
+function currentSemesterWeek() {
+    const dateValue = $('#start-date').value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return null;
+    const anchor = new Date(`${dateValue}T00:00:00`);
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dayDiff = Math.round((startOfToday - anchor) / 86400000);
+    const week = Math.floor(dayDiff / 7) + 1;
+    const total = totalWeeks();
+    if (week < 1 || week > total) return null;
+    return { week, day: ((startOfToday.getDay() + 6) % 7) + 1 };
+}
+
+function teachersForWeek(course) {
+    if (state.viewMode !== 'week' || !state.activeWeek) return '';
+    const segments = (course.teacherSegments || [])
+        .filter(segment => (segment.weeks || []).includes(state.activeWeek))
+        .map(segment => segment.teacher)
+        .filter(Boolean);
+    return [...new Set(segments)].join('、') || course.teacher || '';
+}
+
+function renderWeekNav() {
+    const total = totalWeeks();
+    if (state.activeWeek < 1 || state.activeWeek > total) state.activeWeek = 1;
+    const single = state.viewMode === 'week';
+    const real = currentSemesterWeek();
+    state.currentRealWeek = real;
+
+    $('#week-mode-all').classList.toggle('is-active', !single);
+    $('#week-mode-single').classList.toggle('is-active', single);
+    $('#week-mode-all').setAttribute('aria-selected', String(!single));
+    $('#week-mode-single').setAttribute('aria-selected', String(single));
+
+    const stepper = $('#week-stepper');
+    stepper.hidden = !single;
+    if (single) {
+        const select = $('#week-select');
+        const previous = Number(select.value) || state.activeWeek;
+        select.innerHTML = Array.from({ length: total }, (_, index) => (
+            `<option value="${index + 1}">第 ${index + 1} 周</option>`
+        )).join('');
+        const current = previous >= 1 && previous <= total ? previous : state.activeWeek;
+        select.value = String(current);
+        $('#week-prev').disabled = state.activeWeek <= 1;
+        $('#week-next').disabled = state.activeWeek >= total;
+    }
+
+    $('#week-badge').hidden = !(single && real && real.week === state.activeWeek);
+
+    const visible = visibleCourses();
+    const summary = $('#schedule-summary');
+    if (!single) {
+        summary.textContent = '全部周次合并预览；点击卡片可修改。';
+    } else if (visible.length) {
+        const subjects = new Set(visible.map(course => course.name)).size;
+        summary.textContent = `第 ${state.activeWeek} 周 · ${subjects} 门课 · ${visible.length} 节`;
+    } else {
+        summary.textContent = `第 ${state.activeWeek} 周 · 本周没有课程`;
+    }
+}
+
+function setViewMode(mode) {
+    state.viewMode = mode === 'week' ? 'week' : 'all';
+    renderWeekNav();
+    renderScheduleGrid();
+    renderAgenda();
+    renderCourseList();
+}
+
+function setActiveWeek(week) {
+    const total = totalWeeks();
+    state.activeWeek = Math.max(1, Math.min(total, Number(week) || 1));
+    renderWeekNav();
+    renderScheduleGrid();
+    renderAgenda();
+    renderCourseList();
+}
+
+function initializeWeekView() {
+    const real = currentSemesterWeek();
+    if (real) {
+        state.viewMode = 'week';
+        state.activeWeek = real.week;
+    } else {
+        state.viewMode = 'all';
+        state.activeWeek = 1;
+    }
 }
 
 function renderDayTabs() {
@@ -379,14 +463,18 @@ function renderScheduleGrid() {
     const courses = visibleCourses();
     const scheduleGrid = $('#schedule-grid');
     scheduleGrid.style.setProperty('--period-count', String(state.periods.length));
+    const real = currentSemesterWeek();
+    const isRealWeek = state.viewMode === 'week' && real && real.week === state.activeWeek;
     const parts = ['<div class="grid-corner" style="grid-column:1;grid-row:1"></div>'];
     DAYS.forEach((day, index) => {
-        parts.push(`<div class="day-header" style="grid-column:${index + 2};grid-row:1">${day}</div>`);
+        const today = isRealWeek && real.day === index + 1 ? ' is-today' : '';
+        parts.push(`<div class="day-header${today}" style="grid-column:${index + 2};grid-row:1">${day}</div>`);
     });
     state.periods.forEach(period => {
         parts.push(`<div class="time-label" style="grid-column:1;grid-row:${period.n + 1}"><strong>${period.n}</strong><small>${period.start}</small></div>`);
         DAYS.forEach((_, dayIndex) => {
-            parts.push(`<div class="grid-cell" style="grid-column:${dayIndex + 2};grid-row:${period.n + 1}"></div>`);
+            const today = isRealWeek && real.day === dayIndex + 1 ? ' is-today' : '';
+            parts.push(`<div class="grid-cell${today}" style="grid-column:${dayIndex + 2};grid-row:${period.n + 1}"></div>`);
         });
     });
 
@@ -402,15 +490,21 @@ function renderScheduleGrid() {
         group.sort((left, right) => (left.weeks[0] ?? 0) - (right.weeks[0] ?? 0) || left.name.localeCompare(right.name, 'zh-CN'));
         const course = group[0];
         const span = Math.max(1, course.endPeriod - course.startPeriod + 1);
-        const cards = group.map(item => `
-            <button class="course-card" type="button" data-course-id="${item.id}" style="--course-color:${colorForCourse(item)}" aria-label="${escapeHtml(`${item.name}，${periodLabel(item)}，${formatWeeks(item.weeks)}`)}">
+        const cards = group.map(item => {
+            const weekTeacher = teachersForWeek(item);
+            const smallLine = weekTeacher
+                ? `${periodLabel(item)} · ${escapeHtml(weekTeacher)} · 本周`
+                : `${periodLabel(item)} · ${escapeHtml(formatWeeks(item.weeks))}`;
+            return `
+            <button class="course-card" type="button" data-course-id="${item.id}" style="--course-color:${colorForCourse(item)}" aria-label="${escapeHtml(`${item.name}，${periodLabel(item)}，${weekTeacher || formatWeeks(item.weeks)}`)}">
                 <span class="course-card-inner">
                     <strong>${escapeHtml(item.name)}</strong>
                     <span>${escapeHtml(item.room || '教室待核对')}</span>
-                    <small>${escapeHtml(periodLabel(item))} · ${escapeHtml(formatWeeks(item.weeks))}</small>
+                    <small>${escapeHtml(smallLine)}</small>
                 </span>
             </button>
-        `).join('');
+        `;
+        }).join('');
         parts.push(`<div class="course-stack" data-count="${group.length}" style="--course-count:${group.length};grid-column:${course.day + 1};grid-row:${course.startPeriod + 1}/span ${span}">${cards}</div>`);
     });
     scheduleGrid.innerHTML = parts.join('');
@@ -463,7 +557,7 @@ function renderAll() {
     const analysis = analyzeSchedule(state.courses, totalWeeks());
     renderStats(analysis);
     renderQuality(analysis);
-    renderWeekFilter();
+    renderWeekNav();
     renderDayTabs();
     renderScheduleGrid();
     renderAgenda();
@@ -663,10 +757,11 @@ function bindSettings() {
 }
 
 function bindReview() {
-    $('#week-filter').addEventListener('change', () => {
-        renderScheduleGrid();
-        renderAgenda();
-    });
+    $('#week-mode-all').addEventListener('click', () => setViewMode('all'));
+    $('#week-mode-single').addEventListener('click', () => setViewMode('week'));
+    $('#week-prev').addEventListener('click', () => setActiveWeek(state.activeWeek - 1));
+    $('#week-next').addEventListener('click', () => setActiveWeek(state.activeWeek + 1));
+    $('#week-select').addEventListener('change', event => setActiveWeek(Number(event.target.value)));
     $('#day-tabs').addEventListener('click', event => {
         const button = event.target.closest('[data-day]');
         if (!button) return;
@@ -751,7 +846,7 @@ function init() {
     initTheme();
     renderPeriodSettings();
     renderEditorOptions();
-    renderWeekFilter();
+    renderWeekNav();
     renderDayTabs();
     bindUpload();
     bindSettings();

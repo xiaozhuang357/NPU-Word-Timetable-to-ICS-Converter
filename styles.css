@@ -300,6 +300,130 @@ svg {
 
 .panel-heading,
 .review-heading,
+
+.week-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.week-segmented {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 13px;
+    background: var(--surface-soft);
+    border: 1px solid var(--line);
+}
+
+.seg-btn {
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 640;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease;
+}
+
+.seg-btn:hover {
+    color: var(--text);
+}
+
+.seg-btn.is-active {
+    background: var(--surface-strong);
+    color: var(--text);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .3);
+}
+
+.week-stepper {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.step-btn {
+    width: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all .16s ease;
+}
+
+.step-btn:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--line-strong);
+    background: var(--surface-strong);
+}
+
+.step-btn:disabled {
+    opacity: .3;
+    cursor: default;
+}
+
+.week-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.week-select-wrap select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 680;
+    min-width: 100px;
+    padding: 0 30px 0 14px;
+    cursor: pointer;
+}
+
+.week-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 1.6px solid var(--text-secondary);
+    border-bottom: 1.6px solid var(--text-secondary);
+    transform: rotate(45deg) translateY(-4px);
+    pointer-events: none;
+}
+
+.week-badge {
+    align-self: center;
+    border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent);
+    border-radius: 999px;
+    background: var(--blue-soft);
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 9px;
+}
+
+.day-header.is-today {
+    color: var(--blue);
+    font-weight: 720;
+}
+
+.grid-cell.is-today {
+    background: color-mix(in srgb, var(--blue) 5%, transparent);
+}
+
 .schedule-toolbar,
 .dialog-heading,
 .period-heading {

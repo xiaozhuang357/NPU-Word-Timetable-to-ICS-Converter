@@ -182,13 +182,24 @@
             <article class="schedule-panel">
                 <div class="schedule-toolbar">
                     <div>
-                        <h3>周课表预览</h3>
-                        <p>课程卡片按节次排列；点击即可修改。</p>
+                        <h3>课表预览</h3>
+                        <p id="schedule-summary">全部周次合并预览；点击卡片可修改。</p>
                     </div>
-                    <label class="compact-field">
-                        <span>显示</span>
-                        <select id="week-filter"><option value="all">全部周次</option></select>
-                    </label>
+                    <div class="week-nav" id="week-nav">
+                        <div class="week-segmented" role="tablist" aria-label="周次显示模式">
+                            <button class="seg-btn is-active" id="week-mode-all" type="button" role="tab" aria-selected="true">全部周次</button>
+                            <button class="seg-btn" id="week-mode-single" type="button" role="tab" aria-selected="false">按周浏览</button>
+                        </div>
+                        <div class="week-stepper" id="week-stepper" hidden>
+                            <button class="step-btn" id="week-prev" type="button" aria-label="上一周">&#8249;</button>
+                            <label class="week-select-wrap">
+                                <select id="week-select" aria-label="选择周次"></select>
+                                <span class="week-chevron" aria-hidden="true"></span>
+                            </label>
+                            <button class="step-btn" id="week-next" type="button" aria-label="下一周">&#8250;</button>
+                        </div>
+                        <span class="week-badge" id="week-badge" hidden>本周</span>
+                    </div>
                 </div>
                 <div class="day-tabs" id="day-tabs" role="tablist" aria-label="选择星期"></div>
                 <div class="schedule-scroll">
