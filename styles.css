@@ -415,6 +415,23 @@ svg {
     padding: 2px 9px;
 }
 
+.day-header span {
+    display: block;
+}
+
+.day-header small {
+    display: block;
+    margin-top: 2px;
+    font-size: 9px;
+    font-weight: 620;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.day-header.is-today small {
+    color: var(--blue);
+}
+
 .day-header.is-today {
     color: var(--blue);
     font-weight: 720;

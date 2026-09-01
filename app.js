@@ -376,6 +376,15 @@ function currentSemesterWeek() {
     return { week, day: ((startOfToday.getDay() + 6) % 7) + 1 };
 }
 
+function weekDate(week, day) {
+    const dateValue = $('#start-date').value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return '';
+    const anchor = new Date(`${dateValue}T00:00:00`);
+    const date = new Date(anchor);
+    date.setDate(date.getDate() + (week - 1) * 7 + (day - 1));
+    const pad = n => String(n).padStart(2, '0');
+    return `${date.getMonth() + 1}.${pad(date.getDate())}`;
+}
 function teachersForWeek(course) {
     if (state.viewMode !== 'week' || !state.activeWeek) return '';
     const segments = (course.teacherSegments || [])
@@ -419,9 +428,15 @@ function renderWeekNav() {
         summary.textContent = '全部周次合并预览；点击卡片可修改。';
     } else if (visible.length) {
         const subjects = new Set(visible.map(course => course.name)).size;
-        summary.textContent = `第 ${state.activeWeek} 周 · ${subjects} 门课 · ${visible.length} 节`;
+        const from = weekDate(state.activeWeek, 1);
+        const to = weekDate(state.activeWeek, 7);
+        const range = from && to ? `（${from} – ${to}）` : '';
+        summary.textContent = `第 ${state.activeWeek} 周${range} · ${subjects} 门课 · ${visible.length} 节`;
     } else {
-        summary.textContent = `第 ${state.activeWeek} 周 · 本周没有课程`;
+        const from = weekDate(state.activeWeek, 1);
+        const to = weekDate(state.activeWeek, 7);
+        const range = from && to ? `（${from} – ${to}）` : '';
+        summary.textContent = `第 ${state.activeWeek} 周${range} · 本周没有课程`;
     }
 }
 
@@ -468,7 +483,9 @@ function renderScheduleGrid() {
     const parts = ['<div class="grid-corner" style="grid-column:1;grid-row:1"></div>'];
     DAYS.forEach((day, index) => {
         const today = isRealWeek && real.day === index + 1 ? ' is-today' : '';
-        parts.push(`<div class="day-header${today}" style="grid-column:${index + 2};grid-row:1">${day}</div>`);
+        const dateLabel = state.viewMode === 'week' ? weekDate(state.activeWeek, index + 1) : '';
+        const dateHtml = dateLabel ? `<small>${dateLabel}</small>` : '';
+        parts.push(`<div class="day-header${today}" style="grid-column:${index + 2};grid-row:1"><span>${day}</span>${dateHtml}</div>`);
     });
     state.periods.forEach(period => {
         parts.push(`<div class="time-label" style="grid-column:1;grid-row:${period.n + 1}"><strong>${period.n}</strong><small>${period.start}</small></div>`);
